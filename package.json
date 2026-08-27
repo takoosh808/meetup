@@ -1,0 +1,8 @@
+{
+  "name": "meetup",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
