@@ -3,6 +3,7 @@ import "dotenv/config";
 import express from "express";
 import { authRouter } from "./auth/routes";
 import { ensureSchema } from "./db";
+import { sessionRouter } from "./sessions/routes";
 
 export function createApp() {
   const app = express();
@@ -14,6 +15,7 @@ export function createApp() {
   });
 
   app.use("/auth", authRouter);
+  app.use("/sessions", sessionRouter);
 
   return app;
 }

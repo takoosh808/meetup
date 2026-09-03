@@ -35,7 +35,7 @@ button {
 }
 
 .auth-panel,
-.profile-panel {
+.dashboard-panel {
   width: min(100%, 420px);
   padding: 32px;
   background: #1d1d1d;
@@ -64,7 +64,8 @@ button {
 
 .brand h1,
 .auth-form h2,
-.profile-panel h2 {
+.profile-summary h2,
+.sessions h2 {
   margin: 0;
   letter-spacing: 0;
 }
@@ -75,7 +76,8 @@ button {
 }
 
 .auth-form h2,
-.profile-panel h2 {
+.profile-summary h2,
+.sessions h2 {
   font-size: 1.5rem;
 }
 
@@ -157,6 +159,116 @@ button {
   margin: 8px 0 28px;
 }
 
+.dashboard-panel {
+  width: min(100%, 720px);
+}
+
+.profile-summary,
+.section-heading,
+.session-row,
+.form-row {
+  display: flex;
+  gap: 16px;
+}
+
+.profile-summary,
+.section-heading,
+.session-row {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.profile-summary {
+  padding-bottom: 24px;
+  border-bottom: 1px solid #353535;
+}
+
+.profile-summary .profile-email {
+  margin-bottom: 0;
+}
+
+.sessions {
+  margin-top: 28px;
+}
+
+.eyebrow,
+.session-status {
+  margin: 0 0 6px;
+  color: #49dda9;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.session-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.session-form label {
+  display: grid;
+  gap: 8px;
+  flex: 1;
+  color: #b8c0b8;
+  font-size: 0.94rem;
+  font-weight: 700;
+}
+
+.session-form input,
+.session-form select,
+.session-form textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  color: #f2f1ec;
+  background: #292929;
+  border: 1px solid #494949;
+  border-radius: 6px;
+  outline: none;
+}
+
+.session-form textarea {
+  min-height: 84px;
+  padding-block: 12px;
+  resize: vertical;
+}
+
+.session-form input:focus,
+.session-form select:focus,
+.session-form textarea:focus {
+  border-color: #49dda9;
+  box-shadow: 0 0 0 3px rgb(73 221 169 / 18%);
+}
+
+.session-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.session-row {
+  padding: 16px;
+  background: #252525;
+  border: 1px solid #3c3c3c;
+  border-radius: 8px;
+}
+
+.session-row h3,
+.session-row p {
+  margin: 0;
+}
+
+.session-row h3 {
+  margin-bottom: 6px;
+}
+
+.session-row > div > p:last-child,
+.empty-state {
+  color: #b8c0b8;
+}
+
 @media (max-width: 480px) {
   .app-shell {
     align-items: start;
@@ -164,8 +276,12 @@ button {
   }
 
   .auth-panel,
-  .profile-panel {
+  .dashboard-panel {
     margin-top: 24px;
     padding: 24px;
+  }
+
+  .form-row {
+    display: grid;
   }
 }

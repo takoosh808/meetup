@@ -10,7 +10,7 @@ function App() {
 
   return (
     <main className="app-shell">
-      <section className="auth-panel" aria-label="Meetup account">
+      <section className={user ? "dashboard-panel" : "auth-panel"} aria-label="Meetup account">
         <div className="brand">
           <span className="brand-mark" aria-hidden="true">M</span>
           <h1>Meetup</h1>

@@ -5,15 +5,39 @@ export const pool = new Pool({
 });
 
 export async function ensureSchema() {
-  await pool.query(`CREATE EXTENSION IF NOT EXISTS pgcrypto;`);
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS users (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      email TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      display_name TEXT NOT NULL,
-      avatar_url TEXT,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    );
-  `);
+  const client = await pool.connect();
+  try {
+    await client.query("SELECT pg_advisory_lock(394871)");
+    await client.query(`CREATE EXTENSION IF NOT EXISTS pgcrypto;`);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        display_name TEXT NOT NULL,
+        avatar_url TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS sessions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        host_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        title TEXT NOT NULL,
+        activity_type TEXT NOT NULL,
+        description TEXT,
+        status TEXT NOT NULL DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'live', 'ended')),
+        scheduled_at TIMESTAMPTZ NOT NULL,
+        broadcast_radius_m INTEGER NOT NULL,
+        checkin_radius_m INTEGER NOT NULL,
+        shutoff_radius_m INTEGER NOT NULL,
+        started_at TIMESTAMPTZ,
+        ended_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+    `);
+  } finally {
+    await client.query("SELECT pg_advisory_unlock(394871)");
+    client.release();
+  }
 }
