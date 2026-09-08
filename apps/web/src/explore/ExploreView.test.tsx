@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthProvider } from "../auth/AuthContext";
 import { ExploreView } from "./ExploreView";
@@ -46,5 +46,9 @@ describe("ExploreView", () => {
     expect(await screen.findByRole("heading", { name: "Plans near you" })).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Sunday Beach Volleyball" })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText("Using your current area")).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: /Sunday Beach Volleyball/ }));
+    expect(screen.getByRole("article", { name: "Session details" })).toHaveTextContent("Sunday Beach Volleyball");
+    fireEvent.click(screen.getByRole("button", { name: "I'm heading there" }));
+    expect(screen.getByRole("button", { name: "You're heading there" })).toBeInTheDocument();
   });
 });

@@ -15,6 +15,8 @@ export function ExploreView() {
   const [center, setCenter] = useState<[number, number]>(defaultCenter);
   const [locationState, setLocationState] = useState("Showing nearby events");
   const [error, setError] = useState<string | null>(null);
+  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [isHeadingThere, setIsHeadingThere] = useState(false);
 
   useEffect(() => {
     if (!mapElement.current || map.current) return;
@@ -78,10 +80,23 @@ export function ExploreView() {
         fillOpacity: 0.95,
       });
       marker.bindPopup(`<strong>${session.title}</strong><br>${session.status} · ${session.activity_type}`);
+      marker.on("click", () => {
+        setSelectedSession(session);
+        setIsHeadingThere(false);
+      });
       markers.current?.addLayer(marker);
     });
     L.circle(center, { radius: 150, color: "#49dda9", weight: 1, fillOpacity: 0.06 }).addTo(markers.current);
   }, [center, sessions]);
+
+  function openDirections(session: Session) {
+    if (session.map_latitude === undefined || session.map_longitude === undefined) return;
+    window.open(
+      `https://www.google.com/maps/dir/?api=1&destination=${session.map_latitude},${session.map_longitude}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  }
 
   return (
     <section className="explore" aria-labelledby="explore-heading">
@@ -94,19 +109,49 @@ export function ExploreView() {
       </div>
       <div className="map-frame" aria-label="Nearby meetup map" ref={mapElement} />
       {error && <p className="auth-error" role="alert">{error}</p>}
+      {selectedSession && (
+        <article className="session-detail" aria-label="Session details">
+          <div className="detail-topline">
+            <span className={`detail-status ${selectedSession.status}`}>
+              {selectedSession.status === "live" ? "Live now" : "Starting soon"}
+            </span>
+            <button className="close-action" type="button" onClick={() => setSelectedSession(null)} aria-label="Close session details">
+              ×
+            </button>
+          </div>
+          <h3>{selectedSession.title}</h3>
+          <p className="detail-meta">{selectedSession.activity_type} · {new Date(selectedSession.scheduled_at).toLocaleString()}</p>
+          {selectedSession.description && <p className="detail-description">{selectedSession.description}</p>}
+          <div className="detail-stats">
+            <span><strong>0</strong> checked in</span>
+            <span><strong>{selectedSession.broadcast_radius_m}m</strong> area</span>
+          </div>
+          <div className="detail-actions">
+            <button className="primary-action" type="button" onClick={() => setIsHeadingThere((current) => !current)}>
+              {isHeadingThere ? "You're heading there" : "I'm heading there"}
+            </button>
+            <button className="secondary-action" type="button" onClick={() => openDirections(selectedSession)}>
+              Directions
+            </button>
+          </div>
+        </article>
+      )}
       <div className="nearby-list">
         {sessions.length === 0 ? (
           <p className="empty-state">Nothing live nearby yet. Host the first plan.</p>
         ) : (
           sessions.map((session) => (
-            <article className="nearby-row" key={session.id}>
+            <button className="nearby-row" key={session.id} type="button" onClick={() => {
+              setSelectedSession(session);
+              setIsHeadingThere(false);
+            }}>
               <span className={`status-dot ${session.status}`} aria-hidden="true" />
               <div>
                 <h3>{session.title}</h3>
                 <p>{session.activity_type} · {session.status}</p>
               </div>
               <span className="nearby-arrow" aria-hidden="true">›</span>
-            </article>
+            </button>
           ))
         )}
       </div>

@@ -261,6 +261,14 @@ button {
   background: #252525;
   border: 1px solid #3c3c3c;
   border-radius: 8px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.nearby-row:hover {
+  border-color: #49dda9;
 }
 
 .nearby-row h3,
@@ -425,4 +433,82 @@ button {
   margin-top: 4px;
   color: #b8c0b8;
   font-size: 0.86rem;
+}
+
+.session-detail {
+  position: relative;
+  z-index: 500;
+  margin: -74px 14px 0;
+  padding: 18px;
+  background: #292929;
+  border: 1px solid #49dda9;
+  border-radius: 8px;
+  box-shadow: 0 16px 32px rgb(0 0 0 / 38%);
+}
+
+.detail-topline,
+.detail-stats,
+.detail-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.detail-status {
+  color: #b8c0b8;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.detail-status.live {
+  color: #49dda9;
+}
+
+.close-action {
+  width: 32px;
+  height: 32px;
+  color: #b8c0b8;
+  background: #3a3a3a;
+  border: 0;
+  border-radius: 50%;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.session-detail h3 {
+  margin: 14px 0 6px;
+  font-size: 1.35rem;
+}
+
+.detail-meta,
+.detail-description {
+  margin: 0;
+  color: #b8c0b8;
+}
+
+.detail-description {
+  margin-top: 12px;
+}
+
+.detail-stats {
+  justify-content: flex-start;
+  margin: 18px 0;
+  color: #b8c0b8;
+  font-size: 0.86rem;
+}
+
+.detail-stats strong {
+  color: #f2f1ec;
+}
+
+.detail-actions {
+  justify-content: stretch;
+}
+
+.detail-actions .primary-action,
+.detail-actions .secondary-action {
+  flex: 1;
 }
