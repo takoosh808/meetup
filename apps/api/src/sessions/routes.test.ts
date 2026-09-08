@@ -24,7 +24,7 @@ afterAll(async () => {
 });
 
 const sessionPayload = {
-  title: "Sunday Beach Volleyball",
+  title: `Sunday Beach Volleyball ${Date.now()}`,
   activityType: "volleyball",
   description: "Open play at the south courts.",
   scheduledAt: "2026-09-06T14:00:00.000Z",
@@ -66,10 +66,11 @@ describe("session lifecycle", () => {
       .get("/sessions/nearby?latitude=34.0195&longitude=-118.4912&radiusM=1000")
       .set("Authorization", `Bearer ${token}`);
     expect(res.status).toBe(200);
-    expect(res.body.sessions).toHaveLength(1);
-    expect(res.body.sessions[0].title).toBe(sessionPayload.title);
-    expect(res.body.sessions[0].map_latitude).toBe(34.02);
-    expect(res.body.sessions[0].map_longitude).toBe(-118.491);
+    const match = res.body.sessions.find((session: { id: string }) => session.id === sessionId);
+    expect(match).toBeDefined();
+    expect(match.title).toBe(sessionPayload.title);
+    expect(match.map_latitude).toBe(34.02);
+    expect(match.map_longitude).toBe(-118.491);
   });
 
   it("lists a host's sessions", async () => {

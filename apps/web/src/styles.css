@@ -206,6 +206,96 @@ button {
   margin-top: 28px;
 }
 
+.explore {
+  margin-top: 28px;
+}
+
+.location-state {
+  color: #b8c0b8;
+  font-size: 0.82rem;
+}
+
+.map-frame {
+  height: 320px;
+  margin-top: 18px;
+  overflow: hidden;
+  background: #202b28;
+  border: 1px solid #3c3c3c;
+  border-radius: 8px;
+}
+
+.leaflet-container {
+  height: 100%;
+  background: #263430;
+  font-family: inherit;
+}
+
+.leaflet-control-zoom a {
+  color: #49dda9;
+  background: #1d1d1d;
+  border-color: #494949;
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  color: #f2f1ec;
+  background: #1d1d1d;
+}
+
+.leaflet-popup-content {
+  margin: 12px 14px;
+}
+
+.nearby-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.nearby-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: #252525;
+  border: 1px solid #3c3c3c;
+  border-radius: 8px;
+}
+
+.nearby-row h3,
+.nearby-row p {
+  margin: 0;
+}
+
+.nearby-row h3 {
+  font-size: 1rem;
+}
+
+.nearby-row p {
+  margin-top: 4px;
+  color: #b8c0b8;
+  font-size: 0.84rem;
+  text-transform: capitalize;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  background: #8c978e;
+  border-radius: 50%;
+}
+
+.status-dot.live {
+  background: #49dda9;
+  box-shadow: 0 0 0 4px rgb(73 221 169 / 14%);
+}
+
+.nearby-arrow {
+  color: #49dda9;
+  font-size: 1.5rem;
+}
+
 .eyebrow,
 .session-status {
   margin: 0 0 6px;
@@ -298,6 +388,15 @@ button {
 
   .form-row {
     display: grid;
+  }
+
+  .map-frame {
+    height: 280px;
+  }
+
+  .location-state {
+    max-width: 130px;
+    text-align: right;
   }
 }
 

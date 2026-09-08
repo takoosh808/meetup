@@ -1,5 +1,6 @@
 import { useAuth } from "./AuthContext";
 import { SessionManager } from "../sessions/SessionManager";
+import { ExploreView } from "../explore/ExploreView";
 
 export function ProfileView() {
   const { user, logout } = useAuth();
@@ -15,6 +16,7 @@ export function ProfileView() {
         </div>
         <button className="text-action" type="button" onClick={logout}>Log out</button>
       </section>
+      <ExploreView />
       <SessionManager />
     </>
   );

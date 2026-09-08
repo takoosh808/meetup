@@ -26,6 +26,8 @@ export interface Session {
   shutoff_radius_m: number;
   started_at: string | null;
   ended_at: string | null;
+  map_latitude?: number;
+  map_longitude?: number;
 }
 
 export interface CreateSessionInput {
@@ -80,6 +82,21 @@ export async function fetchMe(token: string): Promise<{ user: PublicUser }> {
 
 export async function fetchMySessions(token: string): Promise<{ sessions: Session[] }> {
   const res = await fetch(`${API_URL}/sessions/mine`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return parseJsonOrThrow(res);
+}
+
+export async function fetchNearbySessions(
+  token: string,
+  params: { latitude: number; longitude: number; radiusM?: number }
+): Promise<{ sessions: Session[] }> {
+  const query = new URLSearchParams({
+    latitude: String(params.latitude),
+    longitude: String(params.longitude),
+    radiusM: String(params.radiusM ?? 5000),
+  });
+  const res = await fetch(`${API_URL}/sessions/nearby?${query}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return parseJsonOrThrow(res);
