@@ -76,11 +76,23 @@ describe("session lifecycle", () => {
   });
 
   it("toggles an RSVP and includes the aggregate count", async () => {
+    const deniedDirections = await request(app)
+      .get(`/sessions/${sessionId}/directions`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(deniedDirections.status).toBe(200);
+    expect(deniedDirections.body.anchor).toEqual({ latitude: 34.0195, longitude: -118.4912 });
+
     const rsvp = await request(app)
       .post(`/sessions/${sessionId}/rsvp`)
       .set("Authorization", `Bearer ${token}`);
     expect(rsvp.status).toBe(200);
     expect(rsvp.body.rsvpStatus).toBe("heading_there");
+
+    const directions = await request(app)
+      .get(`/sessions/${sessionId}/directions`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(directions.status).toBe(200);
+    expect(directions.body.anchor).toEqual({ latitude: 34.0195, longitude: -118.4912 });
 
     const nearby = await request(app)
       .get("/sessions/nearby?latitude=34.0195&longitude=-118.4912&radiusM=1000")

@@ -147,3 +147,23 @@ export async function toggleRsvp(sessionId: string, userId: string): Promise<"he
   }
   return result.rows[0].rsvp_status;
 }
+
+export async function getDirectionsAnchor(sessionId: string, userId: string): Promise<{
+  latitude: number;
+  longitude: number;
+} | null> {
+  const result = await pool.query<{ latitude: number; longitude: number }>(
+    `SELECT
+       ST_Y(sessions.anchor_location::geometry)::double precision AS latitude,
+       ST_X(sessions.anchor_location::geometry)::double precision AS longitude
+     FROM sessions
+     LEFT JOIN session_attendance attendance
+       ON attendance.session_id = sessions.id AND attendance.user_id = $2
+     WHERE sessions.id = $1
+       AND sessions.status IN ('scheduled', 'live')
+       AND sessions.anchor_location IS NOT NULL
+       AND (sessions.host_id = $2 OR attendance.rsvp_status = 'heading_there')`,
+    [sessionId, userId]
+  );
+  return result.rows[0] ?? null;
+}

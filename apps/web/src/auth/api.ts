@@ -141,3 +141,13 @@ export async function toggleSessionRsvp(
   });
   return parseJsonOrThrow(res);
 }
+
+export async function fetchSessionDirections(
+  token: string,
+  sessionId: string
+): Promise<{ anchor: { latitude: number; longitude: number } }> {
+  const res = await fetch(`${API_URL}/sessions/${sessionId}/directions`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return parseJsonOrThrow(res);
+}

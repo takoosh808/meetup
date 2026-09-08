@@ -2,7 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useAuth } from "../auth/AuthContext";
-import { fetchNearbySessions, toggleSessionRsvp, type Session } from "../auth/api";
+import {
+  fetchNearbySessions,
+  fetchSessionDirections,
+  toggleSessionRsvp,
+  type Session,
+} from "../auth/api";
 
 const defaultCenter: [number, number] = [34.0195, -118.4912];
 
@@ -90,13 +95,18 @@ export function ExploreView() {
     L.circle(center, { radius: 150, color: "#49dda9", weight: 1, fillOpacity: 0.06 }).addTo(markers.current);
   }, [center, sessions]);
 
-  function openDirections(session: Session) {
-    if (session.map_latitude === undefined || session.map_longitude === undefined) return;
-    window.open(
-      `https://www.google.com/maps/dir/?api=1&destination=${session.map_latitude},${session.map_longitude}`,
-      "_blank",
-      "noopener,noreferrer"
-    );
+  async function openDirections(session: Session) {
+    if (!token) return;
+    try {
+      const { anchor } = await fetchSessionDirections(token, session.id);
+      window.open(
+        `https://www.google.com/maps/dir/?api=1&destination=${anchor.latitude},${anchor.longitude}`,
+        "_blank",
+        "noopener,noreferrer"
+      );
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "RSVP before requesting directions");
+    }
   }
 
   async function toggleRsvp() {

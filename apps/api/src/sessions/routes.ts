@@ -2,6 +2,7 @@ import { Router } from "express";
 import { requireAuth } from "../auth/middleware";
 import {
   createSession,
+  getDirectionsAnchor,
   listNearbySessions,
   listSessionsByHost,
   transitionSession,
@@ -60,4 +61,12 @@ sessionRouter.post("/:sessionId/rsvp", async (req, res) => {
   } catch {
     res.status(404).json({ error: "Session not found or ended" });
   }
+});
+
+sessionRouter.get("/:sessionId/directions", async (req, res) => {
+  const anchor = await getDirectionsAnchor(req.params.sessionId, req.userId!);
+  if (!anchor) {
+    return res.status(403).json({ error: "RSVP to this session before requesting directions" });
+  }
+  res.json({ anchor });
 });
