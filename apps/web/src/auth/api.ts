@@ -28,6 +28,8 @@ export interface Session {
   ended_at: string | null;
   map_latitude?: number;
   map_longitude?: number;
+  heading_there_count?: number;
+  current_user_rsvp?: "heading_there" | "cancelled" | null;
 }
 
 export interface CreateSessionInput {
@@ -123,6 +125,17 @@ export async function changeSessionStatus(
   action: "start" | "end"
 ): Promise<{ session: Session }> {
   const res = await fetch(`${API_URL}/sessions/${sessionId}/${action}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return parseJsonOrThrow(res);
+}
+
+export async function toggleSessionRsvp(
+  token: string,
+  sessionId: string
+): Promise<{ rsvpStatus: "heading_there" | "cancelled" }> {
+  const res = await fetch(`${API_URL}/sessions/${sessionId}/rsvp`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
   });

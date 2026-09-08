@@ -71,6 +71,28 @@ describe("session lifecycle", () => {
     expect(match.title).toBe(sessionPayload.title);
     expect(match.map_latitude).toBe(34.02);
     expect(match.map_longitude).toBe(-118.491);
+    expect(match.heading_there_count).toBe(0);
+    expect(match.current_user_rsvp).toBeNull();
+  });
+
+  it("toggles an RSVP and includes the aggregate count", async () => {
+    const rsvp = await request(app)
+      .post(`/sessions/${sessionId}/rsvp`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(rsvp.status).toBe(200);
+    expect(rsvp.body.rsvpStatus).toBe("heading_there");
+
+    const nearby = await request(app)
+      .get("/sessions/nearby?latitude=34.0195&longitude=-118.4912&radiusM=1000")
+      .set("Authorization", `Bearer ${token}`);
+    const match = nearby.body.sessions.find((session: { id: string }) => session.id === sessionId);
+    expect(match.heading_there_count).toBe(1);
+    expect(match.current_user_rsvp).toBe("heading_there");
+
+    const cancelled = await request(app)
+      .post(`/sessions/${sessionId}/rsvp`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(cancelled.body.rsvpStatus).toBe("cancelled");
   });
 
   it("lists a host's sessions", async () => {

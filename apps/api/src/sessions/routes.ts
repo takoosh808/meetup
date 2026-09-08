@@ -5,6 +5,7 @@ import {
   listNearbySessions,
   listSessionsByHost,
   transitionSession,
+  toggleRsvp,
 } from "./repository";
 import { createSessionSchema, nearbySessionsSchema } from "./schemas";
 
@@ -48,6 +49,15 @@ sessionRouter.get("/nearby", async (req, res) => {
   if (!parsed.success) {
     return res.status(400).json({ error: "Invalid location query", details: parsed.error.flatten() });
   }
-  const sessions = await listNearbySessions(parsed.data);
+  const sessions = await listNearbySessions({ ...parsed.data, userId: req.userId! });
   res.json({ sessions });
+});
+
+sessionRouter.post("/:sessionId/rsvp", async (req, res) => {
+  try {
+    const rsvpStatus = await toggleRsvp(req.params.sessionId, req.userId!);
+    res.json({ rsvpStatus });
+  } catch {
+    res.status(404).json({ error: "Session not found or ended" });
+  }
 });

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useAuth } from "../auth/AuthContext";
-import { fetchNearbySessions, type Session } from "../auth/api";
+import { fetchNearbySessions, toggleSessionRsvp, type Session } from "../auth/api";
 
 const defaultCenter: [number, number] = [34.0195, -118.4912];
 
@@ -17,6 +17,7 @@ export function ExploreView() {
   const [error, setError] = useState<string | null>(null);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isHeadingThere, setIsHeadingThere] = useState(false);
+  const [isRsvpSubmitting, setIsRsvpSubmitting] = useState(false);
 
   useEffect(() => {
     if (!mapElement.current || map.current) return;
@@ -82,7 +83,7 @@ export function ExploreView() {
       marker.bindPopup(`<strong>${session.title}</strong><br>${session.status} · ${session.activity_type}`);
       marker.on("click", () => {
         setSelectedSession(session);
-        setIsHeadingThere(false);
+        setIsHeadingThere(session.current_user_rsvp === "heading_there");
       });
       markers.current?.addLayer(marker);
     });
@@ -96,6 +97,40 @@ export function ExploreView() {
       "_blank",
       "noopener,noreferrer"
     );
+  }
+
+  async function toggleRsvp() {
+    if (!token || !selectedSession || isRsvpSubmitting) return;
+    setIsRsvpSubmitting(true);
+    setError(null);
+    try {
+      const response = await toggleSessionRsvp(token, selectedSession.id);
+      const nextHeadingThere = response.rsvpStatus === "heading_there";
+      setIsHeadingThere(nextHeadingThere);
+      setSessions((current) => current.map((session) => {
+        if (session.id !== selectedSession.id) return session;
+        return {
+          ...session,
+          current_user_rsvp: response.rsvpStatus,
+          heading_there_count: Math.max(
+            0,
+            (session.heading_there_count ?? 0) + (nextHeadingThere ? 1 : -1)
+          ),
+        };
+      }));
+      setSelectedSession((current) => current ? {
+        ...current,
+        current_user_rsvp: response.rsvpStatus,
+        heading_there_count: Math.max(
+          0,
+          (current.heading_there_count ?? 0) + (nextHeadingThere ? 1 : -1)
+        ),
+      } : current);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Unable to update RSVP");
+    } finally {
+      setIsRsvpSubmitting(false);
+    }
   }
 
   return (
@@ -123,12 +158,12 @@ export function ExploreView() {
           <p className="detail-meta">{selectedSession.activity_type} · {new Date(selectedSession.scheduled_at).toLocaleString()}</p>
           {selectedSession.description && <p className="detail-description">{selectedSession.description}</p>}
           <div className="detail-stats">
-            <span><strong>0</strong> checked in</span>
+            <span><strong>{selectedSession.heading_there_count ?? 0}</strong> heading there</span>
             <span><strong>{selectedSession.broadcast_radius_m}m</strong> area</span>
           </div>
           <div className="detail-actions">
-            <button className="primary-action" type="button" onClick={() => setIsHeadingThere((current) => !current)}>
-              {isHeadingThere ? "You're heading there" : "I'm heading there"}
+            <button className="primary-action" type="button" onClick={toggleRsvp} disabled={isRsvpSubmitting}>
+              {isRsvpSubmitting ? "Updating..." : isHeadingThere ? "You're heading there" : "I'm heading there"}
             </button>
             <button className="secondary-action" type="button" onClick={() => openDirections(selectedSession)}>
               Directions
@@ -143,7 +178,7 @@ export function ExploreView() {
           sessions.map((session) => (
             <button className="nearby-row" key={session.id} type="button" onClick={() => {
               setSelectedSession(session);
-              setIsHeadingThere(false);
+              setIsHeadingThere(session.current_user_rsvp === "heading_there");
             }}>
               <span className={`status-dot ${session.status}`} aria-hidden="true" />
               <div>

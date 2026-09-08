@@ -5,9 +5,11 @@ import { ExploreView } from "./ExploreView";
 
 describe("ExploreView", () => {
   beforeEach(() => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({
-      ok: true,
-      json: async () => ({
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input).includes("/rsvp")) {
+        return { ok: true, json: async () => ({ rsvpStatus: "heading_there" }) };
+      }
+      return { ok: true, json: async () => ({
         sessions: [
           {
             id: "session-1",
@@ -23,10 +25,12 @@ describe("ExploreView", () => {
             ended_at: null,
             map_latitude: 34.02,
             map_longitude: -118.491,
+            heading_there_count: 0,
+            current_user_rsvp: null,
           },
         ],
-      }),
-    })));
+      }) };
+    }));
     vi.stubGlobal("navigator", {
       geolocation: {
         getCurrentPosition: (success: PositionCallback) =>
@@ -49,6 +53,6 @@ describe("ExploreView", () => {
     fireEvent.click(screen.getByRole("button", { name: /Sunday Beach Volleyball/ }));
     expect(screen.getByRole("article", { name: "Session details" })).toHaveTextContent("Sunday Beach Volleyball");
     fireEvent.click(screen.getByRole("button", { name: "I'm heading there" }));
-    expect(screen.getByRole("button", { name: "You're heading there" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "You're heading there" })).toBeInTheDocument();
   });
 });

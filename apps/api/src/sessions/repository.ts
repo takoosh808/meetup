@@ -18,11 +18,20 @@ export interface SessionRecord {
   created_at: string;
   map_latitude?: number;
   map_longitude?: number;
+  heading_there_count?: number;
+  current_user_rsvp?: "heading_there" | "cancelled" | null;
 }
 
 const sessionColumns = `
   id, host_id, title, activity_type, description, status, scheduled_at,
   broadcast_radius_m, checkin_radius_m, shutoff_radius_m, started_at, ended_at, created_at
+`;
+
+const nearbySessionColumns = `
+  sessions.id, sessions.host_id, sessions.title, sessions.activity_type,
+  sessions.description, sessions.status, sessions.scheduled_at,
+  sessions.broadcast_radius_m, sessions.checkin_radius_m, sessions.shutoff_radius_m,
+  sessions.started_at, sessions.ended_at, sessions.created_at
 `;
 
 export async function createSession(params: {
@@ -90,22 +99,51 @@ export async function listNearbySessions(params: {
   latitude: number;
   longitude: number;
   radiusM: number;
+  userId: string;
 }): Promise<SessionRecord[]> {
   const result = await pool.query<SessionRecord>(
-    `SELECT ${sessionColumns},
-       ROUND(ST_Y(anchor_location::geometry)::numeric, 3)::double precision AS map_latitude,
-       ROUND(ST_X(anchor_location::geometry)::numeric, 3)::double precision AS map_longitude
+     `SELECT ${nearbySessionColumns},
+       ROUND(ST_Y(sessions.anchor_location::geometry)::numeric, 3)::double precision AS map_latitude,
+       ROUND(ST_X(sessions.anchor_location::geometry)::numeric, 3)::double precision AS map_longitude,
+       COUNT(attendance.user_id) FILTER (WHERE attendance.rsvp_status = 'heading_there')::integer
+         AS heading_there_count,
+       MAX(CASE WHEN attendance.user_id = $4 THEN attendance.rsvp_status END) AS current_user_rsvp
      FROM sessions
+     LEFT JOIN session_attendance attendance ON attendance.session_id = sessions.id
      WHERE status IN ('scheduled', 'live')
-       AND anchor_location IS NOT NULL
+       AND sessions.anchor_location IS NOT NULL
        AND ST_DWithin(
-         anchor_location,
+         sessions.anchor_location,
          ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography,
          $3
        )
-     ORDER BY scheduled_at ASC
+     GROUP BY sessions.id
+    ORDER BY sessions.scheduled_at ASC
      LIMIT 100`,
-    [params.latitude, params.longitude, params.radiusM]
+    [params.latitude, params.longitude, params.radiusM, params.userId]
   );
   return result.rows;
+}
+
+export async function toggleRsvp(sessionId: string, userId: string): Promise<"heading_there" | "cancelled"> {
+  const result = await pool.query<{ rsvp_status: "heading_there" | "cancelled" }>(
+    `INSERT INTO session_attendance (session_id, user_id, rsvp_status)
+     SELECT $1, $2, 'heading_there'
+     WHERE EXISTS (
+       SELECT 1 FROM sessions WHERE id = $1 AND status IN ('scheduled', 'live')
+     )
+     ON CONFLICT (session_id, user_id)
+     DO UPDATE SET
+       rsvp_status = CASE
+         WHEN session_attendance.rsvp_status = 'heading_there' THEN 'cancelled'
+         ELSE 'heading_there'
+       END,
+       updated_at = now()
+     RETURNING rsvp_status`,
+    [sessionId, userId]
+  );
+  if (!result.rows[0]) {
+    throw new Error("Session not found or ended");
+  }
+  return result.rows[0].rsvp_status;
 }

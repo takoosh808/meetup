@@ -45,6 +45,17 @@ export async function ensureSchema() {
       CREATE INDEX IF NOT EXISTS sessions_anchor_location_gix
       ON sessions USING GIST (anchor_location);
     `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS session_attendance (
+        session_id UUID NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        rsvp_status TEXT NOT NULL DEFAULT 'heading_there'
+          CHECK (rsvp_status IN ('heading_there', 'cancelled')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        PRIMARY KEY (session_id, user_id)
+      );
+    `);
   } finally {
     await client.query("SELECT pg_advisory_unlock(394871)");
     client.release();
