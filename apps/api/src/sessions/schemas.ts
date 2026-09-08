@@ -17,6 +17,12 @@ export const createSessionSchema = z
     broadcastRadiusM: z.number().int().min(50).max(1000).default(150),
     checkinRadiusM: z.number().int().min(10).max(200).default(40),
     shutoffRadiusM: z.number().int().min(100).max(5000).default(300),
+    anchor: z
+      .object({
+        latitude: z.number().min(-90).max(90),
+        longitude: z.number().min(-180).max(180),
+      })
+      .optional(),
   })
   .superRefine((session, ctx) => {
     if (session.checkinRadiusM > session.broadcastRadiusM) {
@@ -34,3 +40,9 @@ export const createSessionSchema = z
       });
     }
   });
+
+export const nearbySessionsSchema = z.object({
+  latitude: z.coerce.number().min(-90).max(90),
+  longitude: z.coerce.number().min(-180).max(180),
+  radiusM: z.coerce.number().int().min(100).max(50000).default(5000),
+});

@@ -16,6 +16,8 @@ export interface SessionRecord {
   started_at: string | null;
   ended_at: string | null;
   created_at: string;
+  map_latitude?: number;
+  map_longitude?: number;
 }
 
 const sessionColumns = `
@@ -32,12 +34,17 @@ export async function createSession(params: {
   broadcastRadiusM: number;
   checkinRadiusM: number;
   shutoffRadiusM: number;
+  anchor?: { latitude: number; longitude: number };
 }): Promise<SessionRecord> {
   const result = await pool.query<SessionRecord>(
     `INSERT INTO sessions (
        host_id, title, activity_type, description, scheduled_at,
-       broadcast_radius_m, checkin_radius_m, shutoff_radius_m
-     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       broadcast_radius_m, checkin_radius_m, shutoff_radius_m, anchor_location
+     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8,
+       CASE WHEN $9::double precision IS NULL OR $10::double precision IS NULL
+         THEN NULL
+         ELSE ST_SetSRID(ST_MakePoint($10, $9), 4326)::geography
+       END)
      RETURNING ${sessionColumns}`,
     [
       params.hostId,
@@ -48,6 +55,8 @@ export async function createSession(params: {
       params.broadcastRadiusM,
       params.checkinRadiusM,
       params.shutoffRadiusM,
+      params.anchor?.latitude ?? null,
+      params.anchor?.longitude ?? null,
     ]
   );
   return result.rows[0];
@@ -75,4 +84,28 @@ export async function transitionSession(
     [sessionId, hostId, status]
   );
   return result.rows[0] ?? null;
+}
+
+export async function listNearbySessions(params: {
+  latitude: number;
+  longitude: number;
+  radiusM: number;
+}): Promise<SessionRecord[]> {
+  const result = await pool.query<SessionRecord>(
+    `SELECT ${sessionColumns},
+       ROUND(ST_Y(anchor_location::geometry)::numeric, 3)::double precision AS map_latitude,
+       ROUND(ST_X(anchor_location::geometry)::numeric, 3)::double precision AS map_longitude
+     FROM sessions
+     WHERE status IN ('scheduled', 'live')
+       AND anchor_location IS NOT NULL
+       AND ST_DWithin(
+         anchor_location,
+         ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography,
+         $3
+       )
+     ORDER BY scheduled_at ASC
+     LIMIT 100`,
+    [params.latitude, params.longitude, params.radiusM]
+  );
+  return result.rows;
 }

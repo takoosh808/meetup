@@ -1,7 +1,12 @@
 import { Router } from "express";
 import { requireAuth } from "../auth/middleware";
-import { createSession, listSessionsByHost, transitionSession } from "./repository";
-import { createSessionSchema } from "./schemas";
+import {
+  createSession,
+  listNearbySessions,
+  listSessionsByHost,
+  transitionSession,
+} from "./repository";
+import { createSessionSchema, nearbySessionsSchema } from "./schemas";
 
 export const sessionRouter = Router();
 
@@ -36,4 +41,13 @@ sessionRouter.post("/:sessionId/end", async (req, res) => {
     return res.status(404).json({ error: "Session not found or already ended" });
   }
   res.json({ session });
+});
+
+sessionRouter.get("/nearby", async (req, res) => {
+  const parsed = nearbySessionsSchema.safeParse(req.query);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Invalid location query", details: parsed.error.flatten() });
+  }
+  const sessions = await listNearbySessions(parsed.data);
+  res.json({ sessions });
 });

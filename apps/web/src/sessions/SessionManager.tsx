@@ -19,6 +19,8 @@ export function SessionManager() {
   const [description, setDescription] = useState("Open play at the south courts.");
   const [scheduledAt, setScheduledAt] = useState(defaultScheduledTime);
   const [error, setError] = useState<string | null>(null);
+  const [anchor, setAnchor] = useState<{ latitude: number; longitude: number }>();
+  const [isLocating, setIsLocating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -44,6 +46,7 @@ export function SessionManager() {
         broadcastRadiusM: 150,
         checkinRadiusM: 40,
         shutoffRadiusM: 300,
+        anchor,
       });
       setSessions((current) => [...current, response.session]);
     } catch (requestError) {
@@ -51,6 +54,26 @@ export function SessionManager() {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  function captureAnchor() {
+    if (!navigator.geolocation) {
+      setError("Location is not available in this browser");
+      return;
+    }
+    setError(null);
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setAnchor({ latitude: position.coords.latitude, longitude: position.coords.longitude });
+        setIsLocating(false);
+      },
+      () => {
+        setError("We could not access your location. You can create the session without an anchor.");
+        setIsLocating(false);
+      },
+      { enableHighAccuracy: false, maximumAge: 300000, timeout: 10000 }
+    );
   }
 
   async function updateStatus(sessionId: string, action: "start" | "end") {
@@ -108,6 +131,17 @@ export function SessionManager() {
           Details
           <textarea value={description} onChange={(event) => setDescription(event.target.value)} />
         </label>
+        <div className="location-control">
+          <div>
+            <p className="location-label">Map anchor</p>
+            <p className="location-help">
+              {anchor ? "Location captured for nearby discovery." : "Optional. Share a general event area, once."}
+            </p>
+          </div>
+          <button className="secondary-action" type="button" onClick={captureAnchor} disabled={isLocating}>
+            {isLocating ? "Locating..." : anchor ? "Update location" : "Use my location"}
+          </button>
+        </div>
         {error && <p className="auth-error" role="alert">{error}</p>}
         <button className="primary-action" type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Creating session..." : "Create session"}

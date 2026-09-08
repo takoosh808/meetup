@@ -36,6 +36,7 @@ export interface CreateSessionInput {
   broadcastRadiusM: number;
   checkinRadiusM: number;
   shutoffRadiusM: number;
+  anchor?: { latitude: number; longitude: number };
 }
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000";

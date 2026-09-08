@@ -51,11 +51,25 @@ describe("session lifecycle", () => {
     const res = await request(app)
       .post("/sessions")
       .set("Authorization", `Bearer ${token}`)
-      .send(sessionPayload);
+      .send({
+        ...sessionPayload,
+        anchor: { latitude: 34.0195, longitude: -118.4912 },
+      });
     expect(res.status).toBe(201);
     expect(res.body.session.title).toBe(sessionPayload.title);
     expect(res.body.session.status).toBe("scheduled");
     sessionId = res.body.session.id;
+  });
+
+  it("returns anchored sessions near a requested location", async () => {
+    const res = await request(app)
+      .get("/sessions/nearby?latitude=34.0195&longitude=-118.4912&radiusM=1000")
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.sessions).toHaveLength(1);
+    expect(res.body.sessions[0].title).toBe(sessionPayload.title);
+    expect(res.body.sessions[0].map_latitude).toBe(34.02);
+    expect(res.body.sessions[0].map_longitude).toBe(-118.491);
   });
 
   it("lists a host's sessions", async () => {

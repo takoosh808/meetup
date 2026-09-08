@@ -133,6 +133,21 @@ button {
   opacity: 0.6;
 }
 
+.secondary-action {
+  min-height: 42px;
+  padding: 0 14px;
+  color: #49dda9;
+  background: transparent;
+  border: 1px solid #49dda9;
+  border-radius: 6px;
+  font-weight: 800;
+}
+
+.secondary-action:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
 .auth-switch {
   margin: 4px 0 0;
   color: #b8c0b8;
@@ -284,4 +299,31 @@ button {
   .form-row {
     display: grid;
   }
+}
+
+.location-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
+  background: #252525;
+  border: 1px solid #3c3c3c;
+  border-radius: 8px;
+}
+
+.location-label,
+.location-help {
+  margin: 0;
+}
+
+.location-label {
+  color: #f2f1ec;
+  font-weight: 800;
+}
+
+.location-help {
+  margin-top: 4px;
+  color: #b8c0b8;
+  font-size: 0.86rem;
 }

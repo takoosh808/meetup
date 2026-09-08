@@ -9,6 +9,7 @@ export async function ensureSchema() {
   try {
     await client.query("SELECT pg_advisory_lock(394871)");
     await client.query(`CREATE EXTENSION IF NOT EXISTS pgcrypto;`);
+    await client.query(`CREATE EXTENSION IF NOT EXISTS postgis;`);
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -35,6 +36,14 @@ export async function ensureSchema() {
         ended_at TIMESTAMPTZ,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
+    `);
+    await client.query(`
+      ALTER TABLE sessions
+      ADD COLUMN IF NOT EXISTS anchor_location geography(Point, 4326);
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS sessions_anchor_location_gix
+      ON sessions USING GIST (anchor_location);
     `);
   } finally {
     await client.query("SELECT pg_advisory_unlock(394871)");
