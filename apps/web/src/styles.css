@@ -536,3 +536,45 @@ button {
   color: #b8c0b8;
   font-size: 0.86rem;
 }
+
+.community-hub {
+  margin-top: 20px;
+}
+
+.community-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.community-actions input {
+  min-width: 0;
+  flex: 1;
+  min-height: 42px;
+  padding: 0 12px;
+  color: #f2f1ec;
+  background: #292929;
+  border: 1px solid #494949;
+  border-radius: 6px;
+}
+
+.community-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.community-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  color: #b8c0b8;
+  background: #252525;
+  border: 1px solid #3c3c3c;
+  border-radius: 8px;
+}
+
+.community-row strong {
+  color: #f2f1ec;
+}

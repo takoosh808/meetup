@@ -5,6 +5,7 @@ import { authRouter } from "./auth/routes";
 import { ensureSchema } from "./db";
 import { sessionRouter } from "./sessions/routes";
 import { notificationRouter } from "./notifications/routes";
+import { communityRouter } from "./community/routes";
 
 export function createApp() {
   const app = express();
@@ -18,6 +19,7 @@ export function createApp() {
   app.use("/auth", authRouter);
   app.use("/sessions", sessionRouter);
   app.use("/notifications", notificationRouter);
+  app.use("/community", communityRouter);
 
   return app;
 }

@@ -2,6 +2,7 @@ import { useAuth } from "./AuthContext";
 import { SessionManager } from "../sessions/SessionManager";
 import { ExploreView } from "../explore/ExploreView";
 import { NotificationSettings } from "../notifications/NotificationSettings";
+import { CommunityHub } from "../community/CommunityHub";
 
 export function ProfileView() {
   const { user, logout } = useAuth();
@@ -18,6 +19,7 @@ export function ProfileView() {
         <button className="text-action" type="button" onClick={logout}>Log out</button>
       </section>
       <NotificationSettings />
+      <CommunityHub />
       <ExploreView />
       <SessionManager />
     </>

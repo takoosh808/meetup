@@ -11,6 +11,22 @@ export interface AuthResponse {
   user: PublicUser;
 }
 
+export interface Group {
+  id: string;
+  name: string;
+  description: string | null;
+  role: "owner" | "member";
+  member_count: number;
+}
+
+export interface Friendship {
+  requester_id: string;
+  addressee_id: string;
+  status: "pending" | "accepted" | "rejected";
+  requester_name: string;
+  addressee_name: string;
+}
+
 export type ActivityType = "volleyball" | "basketball" | "soccer" | "running" | "other";
 export type SessionStatus = "scheduled" | "live" | "ended";
 
@@ -207,6 +223,34 @@ export async function removePushSubscription(token: string, endpoint: string) {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify({ endpoint }),
+  });
+  return parseJsonOrThrow(res);
+}
+
+export async function fetchGroups(token: string): Promise<{ groups: Group[] }> {
+  const res = await fetch(`${API_URL}/community/groups`, { headers: { Authorization: `Bearer ${token}` } });
+  return parseJsonOrThrow(res);
+}
+
+export async function createGroup(token: string, group: { name: string; description?: string }) {
+  const res = await fetch(`${API_URL}/community/groups`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(group),
+  });
+  return parseJsonOrThrow(res);
+}
+
+export async function fetchFriendships(token: string): Promise<{ friendships: Friendship[] }> {
+  const res = await fetch(`${API_URL}/community/friends`, { headers: { Authorization: `Bearer ${token}` } });
+  return parseJsonOrThrow(res);
+}
+
+export async function sendFriendRequest(token: string, userId: string) {
+  const res = await fetch(`${API_URL}/community/friends/requests`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ userId }),
   });
   return parseJsonOrThrow(res);
 }

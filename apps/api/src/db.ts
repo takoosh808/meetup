@@ -76,6 +76,35 @@ export async function ensureSchema() {
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
     `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS groups (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        description TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS group_members (
+        group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('owner', 'member')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        PRIMARY KEY (group_id, user_id)
+      );
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS friendships (
+        requester_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        addressee_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        PRIMARY KEY (requester_id, addressee_id),
+        CHECK (requester_id <> addressee_id)
+      );
+    `);
   } finally {
     await client.query("SELECT pg_advisory_unlock(394871)");
     client.release();
