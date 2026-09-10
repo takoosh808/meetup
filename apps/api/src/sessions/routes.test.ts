@@ -39,6 +39,14 @@ describe("session lifecycle", () => {
     expect(res.status).toBe(401);
   });
 
+  it("rejects location updates without an RSVP", async () => {
+    const res = await request(app)
+      .post("/sessions/not-a-session/location")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ latitude: 34.0195, longitude: -118.4912, accuracyM: 5 });
+    expect(res.status).toBe(403);
+  });
+
   it("validates session radius constraints", async () => {
     const res = await request(app)
       .post("/sessions")
@@ -73,6 +81,7 @@ describe("session lifecycle", () => {
     expect(match.map_longitude).toBe(-118.491);
     expect(match.heading_there_count).toBe(0);
     expect(match.current_user_rsvp).toBeNull();
+
   });
 
   it("toggles an RSVP and includes the aggregate count", async () => {
@@ -100,6 +109,29 @@ describe("session lifecycle", () => {
     const match = nearby.body.sessions.find((session: { id: string }) => session.id === sessionId);
     expect(match.heading_there_count).toBe(1);
     expect(match.current_user_rsvp).toBe("heading_there");
+
+    const checkedIn = await request(app)
+      .post(`/sessions/${sessionId}/location`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ latitude: 34.0195, longitude: -118.4912, accuracyM: 5 });
+    expect(checkedIn.status).toBe(200);
+    expect(checkedIn.body.attendanceStatus).toBe("checked_in");
+
+    const withCheckIn = await request(app)
+      .get("/sessions/nearby?latitude=34.0195&longitude=-118.4912&radiusM=1000")
+      .set("Authorization", `Bearer ${token}`);
+    const checkedInMatch = withCheckIn.body.sessions.find(
+      (session: { id: string }) => session.id === sessionId
+    );
+    expect(checkedInMatch.checked_in_count).toBe(1);
+    expect(checkedInMatch.current_user_rsvp).toBe("checked_in");
+
+    const checkedOut = await request(app)
+      .post(`/sessions/${sessionId}/location`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ latitude: 34.025, longitude: -118.4912, accuracyM: 0 });
+    expect(checkedOut.status).toBe(200);
+    expect(checkedOut.body.attendanceStatus).toBe("heading_there");
 
     const cancelled = await request(app)
       .post(`/sessions/${sessionId}/rsvp`)

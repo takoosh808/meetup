@@ -5,11 +5,16 @@ import { useAuth } from "../auth/AuthContext";
 import {
   fetchNearbySessions,
   fetchSessionDirections,
+  sendSessionLocation,
   toggleSessionRsvp,
   type Session,
 } from "../auth/api";
 
 const defaultCenter: [number, number] = [34.0195, -118.4912];
+
+function isAttendanceActive(session: Session | null) {
+  return session?.current_user_rsvp === "heading_there" || session?.current_user_rsvp === "checked_in";
+}
 
 export function ExploreView() {
   const { token } = useAuth();
@@ -88,12 +93,41 @@ export function ExploreView() {
       marker.bindPopup(`<strong>${session.title}</strong><br>${session.status} · ${session.activity_type}`);
       marker.on("click", () => {
         setSelectedSession(session);
-        setIsHeadingThere(session.current_user_rsvp === "heading_there");
+        setIsHeadingThere(isAttendanceActive(session));
       });
       markers.current?.addLayer(marker);
     });
     L.circle(center, { radius: 150, color: "#49dda9", weight: 1, fillOpacity: 0.06 }).addTo(markers.current);
   }, [center, sessions]);
+
+  useEffect(() => {
+    if (!token || !selectedSession || !isAttendanceActive(selectedSession) || !navigator.geolocation?.watchPosition) {
+      return;
+    }
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        sendSessionLocation(token, selectedSession.id, {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracyM: position.coords.accuracy,
+        })
+          .then(({ attendanceStatus }) => {
+            setSelectedSession((current) => current ? {
+              ...current,
+              current_user_rsvp: attendanceStatus,
+            } : current);
+          })
+          .catch((requestError) => {
+            setError(requestError instanceof Error ? requestError.message : "Unable to update check-in");
+          });
+      },
+      () => setError("Location updates are unavailable; keep this tab open to check in."),
+      { enableHighAccuracy: false, maximumAge: 300000, timeout: 10000 }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [isHeadingThere, selectedSession?.id, token]);
 
   async function openDirections(session: Session) {
     if (!token) return;
@@ -179,6 +213,9 @@ export function ExploreView() {
               Directions
             </button>
           </div>
+          {isHeadingThere && (
+            <p className="tracking-note">Location check-in is active while this tab stays open.</p>
+          )}
         </article>
       )}
       <div className="nearby-list">
@@ -188,7 +225,7 @@ export function ExploreView() {
           sessions.map((session) => (
             <button className="nearby-row" key={session.id} type="button" onClick={() => {
               setSelectedSession(session);
-              setIsHeadingThere(session.current_user_rsvp === "heading_there");
+              setIsHeadingThere(isAttendanceActive(session));
             }}>
               <span className={`status-dot ${session.status}`} aria-hidden="true" />
               <div>

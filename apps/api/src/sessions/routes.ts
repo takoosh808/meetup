@@ -7,6 +7,7 @@ import {
   listSessionsByHost,
   transitionSession,
   toggleRsvp,
+  updateAttendanceFromLocation,
 } from "./repository";
 import { createSessionSchema, nearbySessionsSchema } from "./schemas";
 
@@ -69,4 +70,30 @@ sessionRouter.get("/:sessionId/directions", async (req, res) => {
     return res.status(403).json({ error: "RSVP to this session before requesting directions" });
   }
   res.json({ anchor });
+});
+
+sessionRouter.post("/:sessionId/location", async (req, res) => {
+  const latitude = Number(req.body.latitude);
+  const longitude = Number(req.body.longitude);
+  const accuracyM = Number(req.body.accuracyM ?? 0);
+  if (
+    !Number.isFinite(latitude) || latitude < -90 || latitude > 90 ||
+    !Number.isFinite(longitude) || longitude < -180 || longitude > 180 ||
+    !Number.isFinite(accuracyM) || accuracyM < 0 || accuracyM > 500
+  ) {
+    return res.status(400).json({ error: "Invalid location" });
+  }
+
+  try {
+    const attendanceStatus = await updateAttendanceFromLocation({
+      sessionId: req.params.sessionId,
+      userId: req.userId!,
+      latitude,
+      longitude,
+      accuracyM,
+    });
+    res.json({ attendanceStatus });
+  } catch {
+    res.status(403).json({ error: "RSVP to this active session before sending location" });
+  }
 });

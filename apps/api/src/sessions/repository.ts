@@ -19,7 +19,7 @@ export interface SessionRecord {
   map_latitude?: number;
   map_longitude?: number;
   heading_there_count?: number;
-  current_user_rsvp?: "heading_there" | "cancelled" | null;
+  current_user_rsvp?: "heading_there" | "checked_in" | "cancelled" | null;
 }
 
 const sessionColumns = `
@@ -105,8 +105,10 @@ export async function listNearbySessions(params: {
      `SELECT ${nearbySessionColumns},
        ROUND(ST_Y(sessions.anchor_location::geometry)::numeric, 3)::double precision AS map_latitude,
        ROUND(ST_X(sessions.anchor_location::geometry)::numeric, 3)::double precision AS map_longitude,
-       COUNT(attendance.user_id) FILTER (WHERE attendance.rsvp_status = 'heading_there')::integer
+       COUNT(attendance.user_id) FILTER (WHERE attendance.rsvp_status IN ('heading_there', 'checked_in'))::integer
          AS heading_there_count,
+       COUNT(attendance.user_id) FILTER (WHERE attendance.rsvp_status = 'checked_in')::integer
+         AS checked_in_count,
        MAX(CASE WHEN attendance.user_id = $4 THEN attendance.rsvp_status END) AS current_user_rsvp
      FROM sessions
      LEFT JOIN session_attendance attendance ON attendance.session_id = sessions.id
@@ -135,7 +137,7 @@ export async function toggleRsvp(sessionId: string, userId: string): Promise<"he
      ON CONFLICT (session_id, user_id)
      DO UPDATE SET
        rsvp_status = CASE
-         WHEN session_attendance.rsvp_status = 'heading_there' THEN 'cancelled'
+         WHEN session_attendance.rsvp_status IN ('heading_there', 'checked_in') THEN 'cancelled'
          ELSE 'heading_there'
        END,
        updated_at = now()
@@ -166,4 +168,44 @@ export async function getDirectionsAnchor(sessionId: string, userId: string): Pr
     [sessionId, userId]
   );
   return result.rows[0] ?? null;
+}
+
+export async function updateAttendanceFromLocation(params: {
+  sessionId: string;
+  userId: string;
+  latitude: number;
+  longitude: number;
+  accuracyM: number;
+}): Promise<"heading_there" | "checked_in"> {
+  const result = await pool.query<{ rsvp_status: "heading_there" | "checked_in" }>(
+    `UPDATE session_attendance attendance
+     SET rsvp_status = CASE
+       WHEN ST_DWithin(
+         sessions.anchor_location,
+         ST_SetSRID(ST_MakePoint($4, $3), 4326)::geography,
+         sessions.checkin_radius_m + LEAST(GREATEST($5, 0), 100)
+       ) THEN 'checked_in'
+       WHEN attendance.rsvp_status = 'checked_in'
+         AND NOT ST_DWithin(
+           sessions.anchor_location,
+           ST_SetSRID(ST_MakePoint($4, $3), 4326)::geography,
+           sessions.checkin_radius_m + 20
+         ) THEN 'heading_there'
+       ELSE attendance.rsvp_status
+     END,
+     updated_at = now()
+     FROM sessions
+     WHERE attendance.session_id = sessions.id
+       AND attendance.session_id = $1
+       AND attendance.user_id = $2
+       AND attendance.rsvp_status IN ('heading_there', 'checked_in')
+       AND sessions.status IN ('scheduled', 'live')
+       AND sessions.anchor_location IS NOT NULL
+     RETURNING attendance.rsvp_status`,
+    [params.sessionId, params.userId, params.latitude, params.longitude, params.accuracyM]
+  );
+  if (!result.rows[0]) {
+    throw new Error("RSVP to this active session before sending location");
+  }
+  return result.rows[0].rsvp_status;
 }

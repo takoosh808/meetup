@@ -50,11 +50,20 @@ export async function ensureSchema() {
         session_id UUID NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
         user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         rsvp_status TEXT NOT NULL DEFAULT 'heading_there'
-          CHECK (rsvp_status IN ('heading_there', 'cancelled')),
+          CHECK (rsvp_status IN ('heading_there', 'checked_in', 'cancelled')),
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         PRIMARY KEY (session_id, user_id)
       );
+    `);
+    await client.query(`
+      ALTER TABLE session_attendance
+      DROP CONSTRAINT IF EXISTS session_attendance_rsvp_status_check;
+    `);
+    await client.query(`
+      ALTER TABLE session_attendance
+      ADD CONSTRAINT session_attendance_rsvp_status_check
+      CHECK (rsvp_status IN ('heading_there', 'checked_in', 'cancelled'));
     `);
   } finally {
     await client.query("SELECT pg_advisory_unlock(394871)");

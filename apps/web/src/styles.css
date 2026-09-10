@@ -508,6 +508,12 @@ button {
   justify-content: stretch;
 }
 
+.tracking-note {
+  margin: 12px 0 0;
+  color: #49dda9;
+  font-size: 0.82rem;
+}
+
 .detail-actions .primary-action,
 .detail-actions .secondary-action {
   flex: 1;
