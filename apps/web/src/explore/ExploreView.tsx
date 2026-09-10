@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useAuth } from "../auth/AuthContext";
+import { useNotifications } from "../notifications/useNotifications";
 import {
   fetchNearbySessions,
   fetchSessionDirections,
@@ -28,6 +29,9 @@ export function ExploreView() {
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isHeadingThere, setIsHeadingThere] = useState(false);
   const [isRsvpSubmitting, setIsRsvpSubmitting] = useState(false);
+  const previousStatuses = useRef<Record<string, Session["status"]>>({});
+  const hasLoadedNearby = useRef(false);
+  const { notify } = useNotifications();
 
   useEffect(() => {
     if (!mapElement.current || map.current) return;
@@ -76,6 +80,37 @@ export function ExploreView() {
       { enableHighAccuracy: false, maximumAge: 300000, timeout: 10000 }
     );
   }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    const refresh = () => {
+      fetchNearbySessions(token, { latitude: center[0], longitude: center[1] })
+        .then((response) => {
+          if (hasLoadedNearby.current) {
+            response.sessions.forEach((session) => {
+              if (
+                session.status === "live" &&
+                previousStatuses.current[session.id] !== "live" &&
+                session.current_user_rsvp === "heading_there"
+              ) {
+                notify(`${session.title} is live`, {
+                  body: "Your session is happening now.",
+                  tag: `meetup-session-${session.id}`,
+                });
+              }
+            });
+          }
+          previousStatuses.current = Object.fromEntries(
+            response.sessions.map((session) => [session.id, session.status])
+          );
+          hasLoadedNearby.current = true;
+          setSessions(response.sessions);
+        })
+        .catch(() => setError("Unable to refresh nearby sessions"));
+    };
+    const intervalId = window.setInterval(refresh, 30000);
+    return () => window.clearInterval(intervalId);
+  }, [center, notify, token]);
 
   useEffect(() => {
     if (!map.current || !markers.current) return;

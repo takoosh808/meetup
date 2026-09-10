@@ -518,3 +518,21 @@ button {
 .detail-actions .secondary-action {
   flex: 1;
 }
+
+.notification-settings {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 20px;
+  padding: 14px;
+  background: #252525;
+  border: 1px solid #3c3c3c;
+  border-radius: 8px;
+}
+
+.notification-help {
+  margin: 4px 0 0;
+  color: #b8c0b8;
+  font-size: 0.86rem;
+}
