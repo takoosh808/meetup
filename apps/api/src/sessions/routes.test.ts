@@ -159,4 +159,27 @@ describe("session lifecycle", () => {
     expect(ended.status).toBe(200);
     expect(ended.body.session.status).toBe("ended");
   });
+
+  it("automatically ends hosting when the host leaves the shutoff radius", async () => {
+    const create = await request(app)
+      .post("/sessions")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        ...sessionPayload,
+        title: `${sessionPayload.title} shutoff`,
+        anchor: { latitude: 34.0195, longitude: -118.4912 },
+      });
+    const hostSessionId = create.body.session.id;
+
+    await request(app)
+      .post(`/sessions/${hostSessionId}/start`)
+      .set("Authorization", `Bearer ${token}`);
+
+    const nearby = await request(app)
+      .post(`/sessions/${hostSessionId}/host-location`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ latitude: 34.03, longitude: -118.4912, accuracyM: 5 });
+    expect(nearby.status).toBe(200);
+    expect(nearby.body.status).toBe("ended");
+  });
 });

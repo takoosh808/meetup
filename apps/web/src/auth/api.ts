@@ -30,6 +30,7 @@ export interface Session {
   map_longitude?: number;
   heading_there_count?: number;
   current_user_rsvp?: "heading_there" | "checked_in" | "cancelled" | null;
+  has_anchor?: boolean;
 }
 
 export interface CreateSessionInput {
@@ -158,6 +159,22 @@ export async function sendSessionLocation(
   location: { latitude: number; longitude: number; accuracyM: number }
 ): Promise<{ attendanceStatus: "heading_there" | "checked_in" }> {
   const res = await fetch(`${API_URL}/sessions/${sessionId}/location`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(location),
+  });
+  return parseJsonOrThrow(res);
+}
+
+export async function sendHostLocation(
+  token: string,
+  sessionId: string,
+  location: { latitude: number; longitude: number; accuracyM: number }
+): Promise<{ status: "live" | "ended" }> {
+  const res = await fetch(`${API_URL}/sessions/${sessionId}/host-location`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,

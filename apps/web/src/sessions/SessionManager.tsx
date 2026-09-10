@@ -5,6 +5,7 @@ import {
   changeSessionStatus,
   createSession,
   fetchMySessions,
+  sendHostLocation,
   type ActivityType,
   type Session,
 } from "../auth/api";
@@ -31,6 +32,37 @@ export function SessionManager() {
         setError(requestError instanceof Error ? requestError.message : "Unable to load sessions");
       });
   }, [token]);
+
+  useEffect(() => {
+    if (!token || !navigator.geolocation?.watchPosition) return;
+    const liveSessions = sessions.filter((session) => session.status === "live" && session.has_anchor);
+    if (liveSessions.length === 0) return;
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        const location = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracyM: position.coords.accuracy,
+        };
+        Promise.all(liveSessions.map((session) => sendHostLocation(token, session.id, location)))
+          .then((responses) => {
+            setSessions((current) => current.map((session) => {
+              const responseIndex = liveSessions.findIndex((liveSession) => liveSession.id === session.id);
+              const response = responses[responseIndex];
+              return response?.status === "ended" ? { ...session, status: "ended" } : session;
+            }));
+          })
+          .catch((requestError) => {
+            setError(requestError instanceof Error ? requestError.message : "Unable to update hosting location");
+          });
+      },
+      () => setError("Hosting location updates are unavailable; keep this tab open to stay live."),
+      { enableHighAccuracy: false, maximumAge: 300000, timeout: 10000 }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [sessions, token]);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();

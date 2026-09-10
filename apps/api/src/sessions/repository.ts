@@ -20,18 +20,21 @@ export interface SessionRecord {
   map_longitude?: number;
   heading_there_count?: number;
   current_user_rsvp?: "heading_there" | "checked_in" | "cancelled" | null;
+  has_anchor?: boolean;
 }
 
 const sessionColumns = `
   id, host_id, title, activity_type, description, status, scheduled_at,
-  broadcast_radius_m, checkin_radius_m, shutoff_radius_m, started_at, ended_at, created_at
+  broadcast_radius_m, checkin_radius_m, shutoff_radius_m, started_at, ended_at, created_at,
+  anchor_location IS NOT NULL AS has_anchor
 `;
 
 const nearbySessionColumns = `
   sessions.id, sessions.host_id, sessions.title, sessions.activity_type,
   sessions.description, sessions.status, sessions.scheduled_at,
   sessions.broadcast_radius_m, sessions.checkin_radius_m, sessions.shutoff_radius_m,
-  sessions.started_at, sessions.ended_at, sessions.created_at
+  sessions.started_at, sessions.ended_at, sessions.created_at,
+  sessions.anchor_location IS NOT NULL AS has_anchor
 `;
 
 export async function createSession(params: {
@@ -208,4 +211,42 @@ export async function updateAttendanceFromLocation(params: {
     throw new Error("RSVP to this active session before sending location");
   }
   return result.rows[0].rsvp_status;
+}
+
+export async function updateHostLocation(params: {
+  sessionId: string;
+  hostId: string;
+  latitude: number;
+  longitude: number;
+  accuracyM: number;
+}): Promise<"live" | "ended"> {
+  const result = await pool.query<{ status: "live" | "ended" }>(
+    `UPDATE sessions
+     SET status = CASE
+       WHEN NOT ST_DWithin(
+         sessions.anchor_location,
+         ST_SetSRID(ST_MakePoint($4, $3), 4326)::geography,
+         sessions.shutoff_radius_m + LEAST(GREATEST($5, 0), 100)
+       ) THEN 'ended'
+       ELSE 'live'
+     END,
+     ended_at = CASE
+       WHEN NOT ST_DWithin(
+         sessions.anchor_location,
+         ST_SetSRID(ST_MakePoint($4, $3), 4326)::geography,
+         sessions.shutoff_radius_m + LEAST(GREATEST($5, 0), 100)
+       ) THEN now()
+       ELSE ended_at
+     END
+     WHERE sessions.id = $1
+       AND sessions.host_id = $2
+       AND sessions.status = 'live'
+       AND sessions.anchor_location IS NOT NULL
+     RETURNING status`,
+    [params.sessionId, params.hostId, params.latitude, params.longitude, params.accuracyM]
+  );
+  if (!result.rows[0]) {
+    throw new Error("Live anchored session not found");
+  }
+  return result.rows[0].status;
 }
