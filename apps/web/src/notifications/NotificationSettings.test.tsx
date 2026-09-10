@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NotificationSettings } from "./NotificationSettings";
+import { AuthProvider } from "../auth/AuthContext";
 
 describe("NotificationSettings", () => {
   beforeEach(() => {
@@ -12,7 +13,11 @@ describe("NotificationSettings", () => {
   });
 
   it("requests permission and enables live session alerts", async () => {
-    render(<NotificationSettings />);
+    render(
+      <AuthProvider>
+        <NotificationSettings />
+      </AuthProvider>
+    );
     fireEvent.click(screen.getByRole("button", { name: "Turn on" }));
     expect(await screen.findByRole("button", { name: "Turn off" })).toBeInTheDocument();
     expect(localStorage.getItem("meetup.notifications.enabled")).toBe("true");

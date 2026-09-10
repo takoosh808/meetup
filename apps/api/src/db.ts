@@ -65,6 +65,17 @@ export async function ensureSchema() {
       ADD CONSTRAINT session_attendance_rsvp_status_check
       CHECK (rsvp_status IN ('heading_there', 'checked_in', 'cancelled'));
     `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS push_subscriptions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        endpoint TEXT UNIQUE NOT NULL,
+        p256dh TEXT NOT NULL,
+        auth TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+    `);
   } finally {
     await client.query("SELECT pg_advisory_unlock(394871)");
     client.release();

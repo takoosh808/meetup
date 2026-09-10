@@ -184,3 +184,29 @@ export async function sendHostLocation(
   });
   return parseJsonOrThrow(res);
 }
+
+export async function fetchNotificationConfig(token: string): Promise<{ publicKey: string | null }> {
+  const res = await fetch(`${API_URL}/notifications/config`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return parseJsonOrThrow(res);
+}
+
+export async function savePushSubscription(token: string, subscription: PushSubscription) {
+  const json = subscription.toJSON();
+  const res = await fetch(`${API_URL}/notifications/subscription`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
+  });
+  return parseJsonOrThrow(res);
+}
+
+export async function removePushSubscription(token: string, endpoint: string) {
+  const res = await fetch(`${API_URL}/notifications/subscription`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ endpoint }),
+  });
+  return parseJsonOrThrow(res);
+}

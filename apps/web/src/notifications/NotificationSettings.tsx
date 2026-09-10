@@ -1,7 +1,9 @@
 import { useNotifications } from "./useNotifications";
+import { useAuth } from "../auth/AuthContext";
 
 export function NotificationSettings() {
-  const { enabled, permission, supported, enable, disable } = useNotifications();
+  const { token } = useAuth();
+  const { enabled, permission, supported, enable, disable } = useNotifications(token);
 
   if (!supported) {
     return <p className="notification-help">Browser notifications are unavailable here.</p>;

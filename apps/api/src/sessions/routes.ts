@@ -11,6 +11,7 @@ import {
   updateHostLocation,
 } from "./repository";
 import { createSessionSchema, nearbySessionsSchema } from "./schemas";
+import { notifySessionStarted } from "../notifications/service";
 
 export const sessionRouter = Router();
 
@@ -36,6 +37,7 @@ sessionRouter.post("/:sessionId/start", async (req, res) => {
   if (!session) {
     return res.status(404).json({ error: "Session not found or already ended" });
   }
+  void notifySessionStarted(session.id, session.title);
   res.json({ session });
 });
 
