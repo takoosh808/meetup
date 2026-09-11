@@ -6,6 +6,9 @@ export interface GroupRecord {
   description: string | null;
   role: "owner" | "member";
   member_count: number;
+  owner_name: string;
+  is_member: boolean;
+  priority_updates: boolean;
 }
 
 export async function createGroup(ownerId: string, name: string, description?: string) {
@@ -25,13 +28,19 @@ export async function createGroup(ownerId: string, name: string, description?: s
 
 export async function listGroupsForUser(userId: string) {
   const result = await pool.query<GroupRecord>(
-    `SELECT groups.id, groups.name, groups.description, group_members.role,
-       COUNT(all_members.user_id)::integer AS member_count
-     FROM group_members
-     JOIN groups ON groups.id = group_members.group_id
-     JOIN group_members all_members ON all_members.group_id = groups.id
-     WHERE group_members.user_id = $1
-     GROUP BY groups.id, groups.name, groups.description, group_members.role
+    `SELECT groups.id, groups.name, groups.description,
+       owner.display_name AS owner_name,
+       COALESCE(membership.role, 'member') AS role,
+       COUNT(all_members.user_id)::integer AS member_count,
+       membership.user_id IS NOT NULL AS is_member,
+       COALESCE(membership.priority_updates, false) AS priority_updates
+     FROM groups
+     JOIN users owner ON owner.id = groups.owner_id
+     LEFT JOIN group_members membership
+       ON membership.group_id = groups.id AND membership.user_id = $1
+     LEFT JOIN group_members all_members ON all_members.group_id = groups.id
+     GROUP BY groups.id, groups.name, groups.description, owner.display_name,
+       membership.role, membership.user_id, membership.priority_updates
      ORDER BY groups.created_at DESC`,
     [userId]
   );
@@ -43,6 +52,13 @@ export async function addGroupMember(groupId: string, userId: string) {
     `INSERT INTO group_members (group_id, user_id) VALUES ($1, $2)
      ON CONFLICT (group_id, user_id) DO NOTHING`,
     [groupId, userId]
+  );
+}
+
+export async function setGroupPriority(groupId: string, userId: string, priority: boolean) {
+  await pool.query(
+    "UPDATE group_members SET priority_updates = $3 WHERE group_id = $1 AND user_id = $2",
+    [groupId, userId, priority]
   );
 }
 
@@ -61,7 +77,8 @@ export async function createFriendRequest(requesterId: string, addresseeId: stri
 export async function listFriendships(userId: string) {
   const result = await pool.query(
     `SELECT friendships.requester_id, friendships.addressee_id, friendships.status,
-       requester.display_name AS requester_name, addressee.display_name AS addressee_name
+       requester.display_name AS requester_name, addressee.display_name AS addressee_name,
+       friendships.requester_id = $1 AS incoming, friendships.priority_updates
      FROM friendships
      JOIN users requester ON requester.id = friendships.requester_id
      JOIN users addressee ON addressee.id = friendships.addressee_id
@@ -70,6 +87,15 @@ export async function listFriendships(userId: string) {
     [userId]
   );
   return result.rows;
+}
+
+export async function setFriendPriority(userId: string, friendId: string, priority: boolean) {
+  await pool.query(
+    `UPDATE friendships SET priority_updates = $3
+     WHERE status = 'accepted' AND ((requester_id = $1 AND addressee_id = $2)
+       OR (requester_id = $2 AND addressee_id = $1))`,
+    [userId, friendId, priority]
+  );
 }
 
 export async function updateFriendRequest(userId: string, requesterId: string, status: "accepted" | "rejected") {

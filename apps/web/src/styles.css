@@ -700,3 +700,80 @@ button {
   border: 1px solid #2e8065;
   border-radius: 6px;
 }
+
+.community-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin: 18px 0 14px;
+  padding: 4px;
+  background: #141414;
+  border: 1px solid #353535;
+  border-radius: 8px;
+}
+
+.community-tab {
+  min-height: 40px;
+  color: #b8c0b8;
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  font-weight: 800;
+}
+
+.community-tab.active,
+.community-tab:hover {
+  color: #05281e;
+  background: #49dda9;
+}
+
+.community-section {
+  display: grid;
+  gap: 14px;
+}
+
+.community-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
+  background: #252525;
+  border: 1px solid #3c3c3c;
+  border-radius: 8px;
+}
+
+.community-card h3,
+.community-card p,
+.community-card small {
+  margin: 0;
+}
+
+.community-card h3 {
+  font-size: 1rem;
+}
+
+.community-card p,
+.community-card small {
+  display: block;
+  margin-top: 4px;
+  color: #b8c0b8;
+}
+
+.community-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.compact-action {
+  min-height: 40px;
+  padding: 0 12px;
+}
+
+.community-subheading {
+  margin: 8px 0 0;
+  color: #f2f1ec;
+  font-size: 1rem;
+}

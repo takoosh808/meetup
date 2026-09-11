@@ -17,6 +17,9 @@ export interface Group {
   description: string | null;
   role: "owner" | "member";
   member_count: number;
+  owner_name: string;
+  is_member: boolean;
+  priority_updates: boolean;
 }
 
 export interface Friendship {
@@ -25,6 +28,8 @@ export interface Friendship {
   status: "pending" | "accepted" | "rejected";
   requester_name: string;
   addressee_name: string;
+  incoming: boolean;
+  priority_updates: boolean;
 }
 
 export type ActivityType = "volleyball" | "basketball" | "soccer" | "running" | "other";
@@ -265,5 +270,25 @@ export async function sendFriendRequest(token: string, userId: string) {
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify({ userId }),
   });
+  return parseJsonOrThrow(res);
+}
+
+export async function joinGroup(token: string, groupId: string) {
+  const res = await fetch(`${API_URL}/community/groups/${groupId}/members`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({}) });
+  return parseJsonOrThrow(res);
+}
+
+export async function setGroupPriority(token: string, groupId: string, priority: boolean) {
+  const res = await fetch(`${API_URL}/community/groups/${groupId}/priority`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ priority }) });
+  return parseJsonOrThrow(res);
+}
+
+export async function decideFriendRequest(token: string, requesterId: string, decision: "accept" | "reject") {
+  const res = await fetch(`${API_URL}/community/friends/requests/${requesterId}/${decision}`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+  return parseJsonOrThrow(res);
+}
+
+export async function setFriendPriority(token: string, friendId: string, priority: boolean) {
+  const res = await fetch(`${API_URL}/community/friends/${friendId}/priority`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ priority }) });
   return parseJsonOrThrow(res);
 }

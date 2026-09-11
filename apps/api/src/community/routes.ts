@@ -8,6 +8,8 @@ import {
   listFriendships,
   listGroupsForUser,
   isGroupOwner,
+  setFriendPriority,
+  setGroupPriority,
   updateFriendRequest,
 } from "./repository";
 
@@ -30,12 +32,18 @@ communityRouter.post("/groups", async (req, res) => {
 });
 
 communityRouter.post("/groups/:groupId/members", async (req, res) => {
-  if (!(await isGroupOwner(req.params.groupId, req.userId!))) {
+  const requestedUser = req.body.userId ?? req.userId;
+  const userId = z.string().uuid().safeParse(requestedUser);
+  if (!userId.success) return res.status(400).json({ error: "Invalid user" });
+  if (userId.data !== req.userId && !(await isGroupOwner(req.params.groupId, req.userId!))) {
     return res.status(403).json({ error: "Only the group owner can add members" });
   }
-  const userId = z.string().uuid().safeParse(req.body.userId);
-  if (!userId.success) return res.status(400).json({ error: "Invalid user" });
   await addGroupMember(req.params.groupId, userId.data);
+  res.status(204).send();
+});
+
+communityRouter.post("/groups/:groupId/priority", async (req, res) => {
+  await setGroupPriority(req.params.groupId, req.userId!, Boolean(req.body.priority));
   res.status(204).send();
 });
 
@@ -61,4 +69,9 @@ communityRouter.post("/friends/requests/:requesterId/reject", async (req, res) =
   const status = await updateFriendRequest(req.userId!, req.params.requesterId, "rejected");
   if (!status) return res.status(404).json({ error: "Friend request not found" });
   res.json({ status });
+});
+
+communityRouter.post("/friends/:friendId/priority", async (req, res) => {
+  await setFriendPriority(req.userId!, req.params.friendId, Boolean(req.body.priority));
+  res.status(204).send();
 });

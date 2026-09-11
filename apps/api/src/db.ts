@@ -90,6 +90,7 @@ export async function ensureSchema() {
         group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
         user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('owner', 'member')),
+        priority_updates BOOLEAN NOT NULL DEFAULT false,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         PRIMARY KEY (group_id, user_id)
       );
@@ -99,12 +100,15 @@ export async function ensureSchema() {
         requester_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         addressee_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected')),
+        priority_updates BOOLEAN NOT NULL DEFAULT false,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         PRIMARY KEY (requester_id, addressee_id),
         CHECK (requester_id <> addressee_id)
       );
     `);
+    await client.query(`ALTER TABLE group_members ADD COLUMN IF NOT EXISTS priority_updates BOOLEAN NOT NULL DEFAULT false;`);
+    await client.query(`ALTER TABLE friendships ADD COLUMN IF NOT EXISTS priority_updates BOOLEAN NOT NULL DEFAULT false;`);
     await client.query(`
       ALTER TABLE sessions
       ADD COLUMN IF NOT EXISTS group_id UUID REFERENCES groups(id) ON DELETE SET NULL;

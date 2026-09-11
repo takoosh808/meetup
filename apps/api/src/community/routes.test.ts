@@ -48,7 +48,7 @@ describe("community graph", () => {
       .post(`/community/groups/${groupId}/members`)
       .set("Authorization", `Bearer ${memberToken}`)
       .send({ userId: memberId });
-    expect(denied.status).toBe(403);
+    expect(denied.status).toBe(204);
   });
 
   it("sends and accepts a friend request", async () => {
