@@ -217,11 +217,17 @@ button {
 
 .map-frame {
   height: 320px;
+  min-height: 280px;
   margin-top: 18px;
   overflow: hidden;
   background: #202b28;
   border: 1px solid #3c3c3c;
   border-radius: 8px;
+}
+
+.map-frame.leaflet-container {
+  height: 320px;
+  min-height: 280px;
 }
 
 .leaflet-container {
@@ -398,8 +404,10 @@ button {
     display: grid;
   }
 
-  .map-frame {
+  .map-frame,
+  .map-frame.leaflet-container {
     height: 280px;
+    min-height: 280px;
   }
 
   .location-state {
