@@ -93,6 +93,18 @@ export async function login(params: { email: string; password: string }): Promis
   return parseJsonOrThrow(res);
 }
 
+export async function changePassword(
+  token: string,
+  passwords: { currentPassword: string; newPassword: string }
+) {
+  const res = await fetch(`${API_URL}/auth/change-password`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(passwords),
+  });
+  return parseJsonOrThrow(res);
+}
+
 export async function fetchMe(token: string): Promise<{ user: PublicUser }> {
   const res = await fetch(`${API_URL}/auth/me`, {
     headers: { Authorization: `Bearer ${token}` },

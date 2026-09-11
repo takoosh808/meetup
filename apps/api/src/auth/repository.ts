@@ -40,3 +40,7 @@ export async function findUserById(id: string): Promise<UserRecord | null> {
   );
   return result.rows[0] ?? null;
 }
+
+export async function updateUserPassword(id: string, passwordHash: string) {
+  await pool.query("UPDATE users SET password_hash = $2 WHERE id = $1", [id, passwordHash]);
+}

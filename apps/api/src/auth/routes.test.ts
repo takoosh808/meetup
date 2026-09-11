@@ -67,4 +67,33 @@ describe("auth flow", () => {
     const res = await request(app).get("/auth/me");
     expect(res.status).toBe(401);
   });
+
+  it("changes the password only after verifying the current password", async () => {
+    const login = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "supersecret123",
+    });
+    const wrong = await request(app)
+      .post("/auth/change-password")
+      .set("Authorization", `Bearer ${login.body.token}`)
+      .send({ currentPassword: "wrong-password", newPassword: "newsecret123" });
+    expect(wrong.status).toBe(401);
+
+    const changed = await request(app)
+      .post("/auth/change-password")
+      .set("Authorization", `Bearer ${login.body.token}`)
+      .send({ currentPassword: "supersecret123", newPassword: "newsecret123" });
+    expect(changed.status).toBe(204);
+
+    const oldLogin = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "supersecret123",
+    });
+    expect(oldLogin.status).toBe(401);
+    const newLogin = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "newsecret123",
+    });
+    expect(newLogin.status).toBe(200);
+  });
 });

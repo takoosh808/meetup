@@ -4,6 +4,7 @@ import { SessionManager } from "../sessions/SessionManager";
 import { ExploreView } from "../explore/ExploreView";
 import { NotificationSettings } from "../notifications/NotificationSettings";
 import { CommunityHub } from "../community/CommunityHub";
+import { ChangePasswordForm } from "./ChangePasswordForm";
 
 export function ProfileView() {
   const { user, logout } = useAuth();
@@ -41,7 +42,22 @@ export function ProfileView() {
       {activeTab === "explore" && <ExploreView />}
       {activeTab === "host" && <SessionManager />}
       {activeTab === "community" && <CommunityHub />}
-      {activeTab === "profile" && <NotificationSettings />}
+      {activeTab === "profile" && (
+        <section className="profile-settings" aria-labelledby="profile-settings-heading">
+          <p className="eyebrow">Account</p>
+          <h2 id="profile-settings-heading">Profile details</h2>
+          <dl className="profile-details">
+            <div><dt>Name</dt><dd>{user.displayName}</dd></div>
+            <div><dt>User ID</dt><dd>{user.id}</dd></div>
+            <div><dt>Email</dt><dd>{user.email}</dd></div>
+          </dl>
+          <NotificationSettings />
+          <details className="password-settings">
+            <summary>Change password</summary>
+            <ChangePasswordForm />
+          </details>
+        </section>
+      )}
     </>
   );
 }

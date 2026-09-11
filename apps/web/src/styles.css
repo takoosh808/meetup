@@ -623,3 +623,80 @@ button {
 .community-row strong {
   color: #f2f1ec;
 }
+
+.profile-settings h2 {
+  margin: 0 0 18px;
+}
+
+.profile-details {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.profile-details div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  background: #252525;
+  border: 1px solid #3c3c3c;
+  border-radius: 8px;
+}
+
+.profile-details dt {
+  color: #b8c0b8;
+}
+
+.profile-details dd {
+  max-width: 70%;
+  margin: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.password-settings {
+  margin-top: 20px;
+  padding: 14px;
+  background: #252525;
+  border: 1px solid #3c3c3c;
+  border-radius: 8px;
+}
+
+.password-settings summary {
+  color: #49dda9;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.password-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.password-form label {
+  display: grid;
+  gap: 8px;
+  color: #b8c0b8;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.password-form input {
+  min-height: 44px;
+  padding: 0 12px;
+  color: #f2f1ec;
+  background: #292929;
+  border: 1px solid #494949;
+  border-radius: 6px;
+}
+
+.success-message {
+  margin: 0;
+  padding: 12px;
+  color: #49dda9;
+  background: #17382e;
+  border: 1px solid #2e8065;
+  border-radius: 6px;
+}
