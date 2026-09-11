@@ -59,6 +59,11 @@ describe("community graph", () => {
     expect(sent.status).toBe(201);
     expect(sent.body.status).toBe("pending");
 
+    const incoming = await request(app)
+      .get("/community/friends")
+      .set("Authorization", `Bearer ${memberToken}`);
+    expect(incoming.body.friendships[0].incoming).toBe(true);
+
     const accepted = await request(app)
       .post(`/community/friends/requests/${(await request(app).get("/auth/me").set("Authorization", `Bearer ${ownerToken}`)).body.user.id}/accept`)
       .set("Authorization", `Bearer ${memberToken}`);

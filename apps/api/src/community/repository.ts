@@ -78,7 +78,7 @@ export async function listFriendships(userId: string) {
   const result = await pool.query(
     `SELECT friendships.requester_id, friendships.addressee_id, friendships.status,
        requester.display_name AS requester_name, addressee.display_name AS addressee_name,
-       friendships.requester_id = $1 AS incoming, friendships.priority_updates
+      friendships.addressee_id = $1 AS incoming, friendships.priority_updates
      FROM friendships
      JOIN users requester ON requester.id = friendships.requester_id
      JOIN users addressee ON addressee.id = friendships.addressee_id
