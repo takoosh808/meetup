@@ -25,11 +25,19 @@ export async function deletePushSubscription(userId: string, endpoint: string) {
 
 export async function listPushSubscriptionsForSession(sessionId: string): Promise<PushSubscriptionRecord[]> {
   const result = await pool.query<PushSubscriptionRecord>(
-    `SELECT push.endpoint, push.p256dh, push.auth
+    `SELECT DISTINCT push.endpoint, push.p256dh, push.auth
      FROM push_subscriptions push
-     JOIN session_attendance attendance ON attendance.user_id = push.user_id
-     WHERE attendance.session_id = $1
-       AND attendance.rsvp_status IN ('heading_there', 'checked_in')`,
+     WHERE push.user_id IN (
+       SELECT attendance.user_id
+       FROM session_attendance attendance
+       WHERE attendance.session_id = $1
+         AND attendance.rsvp_status IN ('heading_there', 'checked_in')
+       UNION
+       SELECT members.user_id
+       FROM sessions
+       JOIN group_members members ON members.group_id = sessions.group_id
+       WHERE sessions.id = $1
+     )`,
     [sessionId]
   );
   return result.rows;

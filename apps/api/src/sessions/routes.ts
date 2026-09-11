@@ -5,6 +5,7 @@ import {
   getDirectionsAnchor,
   listNearbySessions,
   listSessionsByHost,
+  isGroupMember,
   transitionSession,
   toggleRsvp,
   updateAttendanceFromLocation,
@@ -23,6 +24,9 @@ sessionRouter.post("/", async (req, res) => {
     return res.status(400).json({ error: "Invalid input", details: parsed.error.flatten() });
   }
 
+  if (parsed.data.groupId && !(await isGroupMember(parsed.data.groupId, req.userId!))) {
+    return res.status(403).json({ error: "Join the group before creating a group session" });
+  }
   const session = await createSession({ hostId: req.userId!, ...parsed.data });
   res.status(201).json({ session });
 });

@@ -182,4 +182,23 @@ describe("session lifecycle", () => {
     expect(nearby.status).toBe(200);
     expect(nearby.body.status).toBe("ended");
   });
+
+  it("rejects a group session for a non-member", async () => {
+    const group = await request(app)
+      .post("/community/groups")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ name: `Private Group ${Date.now()}` });
+    const otherEmail = `non-member-${Date.now()}@example.com`;
+    const other = await request(app).post("/auth/signup").send({
+      email: otherEmail,
+      password: "supersecret123",
+      displayName: "Non Member",
+    });
+    const rejected = await request(app)
+      .post("/sessions")
+      .set("Authorization", `Bearer ${other.body.token}`)
+      .send({ ...sessionPayload, groupId: group.body.group.id });
+    expect(rejected.status).toBe(403);
+    await pool.query("DELETE FROM users WHERE email = $1", [otherEmail]);
+  });
 });

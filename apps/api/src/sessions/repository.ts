@@ -47,16 +47,17 @@ export async function createSession(params: {
   checkinRadiusM: number;
   shutoffRadiusM: number;
   anchor?: { latitude: number; longitude: number };
+  groupId?: string;
 }): Promise<SessionRecord> {
   const result = await pool.query<SessionRecord>(
     `INSERT INTO sessions (
        host_id, title, activity_type, description, scheduled_at,
-       broadcast_radius_m, checkin_radius_m, shutoff_radius_m, anchor_location
+       broadcast_radius_m, checkin_radius_m, shutoff_radius_m, anchor_location, group_id
      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8,
        CASE WHEN $9::double precision IS NULL OR $10::double precision IS NULL
          THEN NULL
          ELSE ST_SetSRID(ST_MakePoint($10, $9), 4326)::geography
-       END)
+      END, $11)
      RETURNING ${sessionColumns}`,
     [
       params.hostId,
@@ -69,6 +70,7 @@ export async function createSession(params: {
       params.shutoffRadiusM,
       params.anchor?.latitude ?? null,
       params.anchor?.longitude ?? null,
+      params.groupId ?? null,
     ]
   );
   return result.rows[0];
@@ -249,4 +251,12 @@ export async function updateHostLocation(params: {
     throw new Error("Live anchored session not found");
   }
   return result.rows[0].status;
+}
+
+export async function isGroupMember(groupId: string, userId: string) {
+  const result = await pool.query(
+    "SELECT 1 FROM group_members WHERE group_id = $1 AND user_id = $2",
+    [groupId, userId]
+  );
+  return result.rowCount === 1;
 }

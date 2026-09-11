@@ -7,8 +7,10 @@ import {
   fetchMySessions,
   sendHostLocation,
   type ActivityType,
+  fetchGroups,
   type Session,
 } from "../auth/api";
+import type { Group } from "../auth/api";
 
 const defaultScheduledTime = "2026-09-06T14:00";
 
@@ -23,6 +25,8 @@ export function SessionManager() {
   const [anchor, setAnchor] = useState<{ latitude: number; longitude: number }>();
   const [isLocating, setIsLocating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [groupId, setGroupId] = useState("");
 
   useEffect(() => {
     if (!token) return;
@@ -31,6 +35,7 @@ export function SessionManager() {
       .catch((requestError) => {
         setError(requestError instanceof Error ? requestError.message : "Unable to load sessions");
       });
+    fetchGroups(token).then((response) => setGroups(response.groups)).catch(() => undefined);
   }, [token]);
 
   useEffect(() => {
@@ -79,6 +84,7 @@ export function SessionManager() {
         checkinRadiusM: 40,
         shutoffRadiusM: 300,
         anchor,
+        groupId: groupId || undefined,
       });
       setSessions((current) => [...current, response.session]);
     } catch (requestError) {
@@ -163,6 +169,15 @@ export function SessionManager() {
           Details
           <textarea value={description} onChange={(event) => setDescription(event.target.value)} />
         </label>
+        {groups.length > 0 && (
+          <label>
+            Group alert
+            <select value={groupId} onChange={(event) => setGroupId(event.target.value)}>
+              <option value="">No group</option>
+              {groups.map((group) => <option value={group.id} key={group.id}>{group.name}</option>)}
+            </select>
+          </label>
+        )}
         <div className="location-control">
           <div>
             <p className="location-label">Map anchor</p>

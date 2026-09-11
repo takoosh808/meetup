@@ -105,6 +105,10 @@ export async function ensureSchema() {
         CHECK (requester_id <> addressee_id)
       );
     `);
+    await client.query(`
+      ALTER TABLE sessions
+      ADD COLUMN IF NOT EXISTS group_id UUID REFERENCES groups(id) ON DELETE SET NULL;
+    `);
   } finally {
     await client.query("SELECT pg_advisory_unlock(394871)");
     client.release();
