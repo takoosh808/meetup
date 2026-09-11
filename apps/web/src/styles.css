@@ -202,6 +202,32 @@ button {
   margin-bottom: 0;
 }
 
+.dashboard-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-top: 24px;
+  padding: 5px;
+  background: #141414;
+  border: 1px solid #353535;
+  border-radius: 8px;
+}
+
+.dashboard-tab {
+  min-height: 40px;
+  color: #b8c0b8;
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  font-weight: 800;
+}
+
+.dashboard-tab:hover,
+.dashboard-tab.active {
+  color: #05281e;
+  background: #49dda9;
+}
+
 .sessions {
   margin-top: 28px;
 }
@@ -402,6 +428,17 @@ button {
 
   .form-row {
     display: grid;
+  }
+
+  .dashboard-tabs {
+    gap: 3px;
+    margin-inline: -8px;
+  }
+
+  .dashboard-tab {
+    min-height: 38px;
+    padding-inline: 4px;
+    font-size: 0.78rem;
   }
 
   .map-frame,
