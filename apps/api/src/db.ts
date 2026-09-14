@@ -4,6 +4,10 @@ export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
+export async function checkDatabaseConnection() {
+  await pool.query("SELECT 1");
+}
+
 export async function ensureSchema() {
   const client = await pool.connect();
   try {

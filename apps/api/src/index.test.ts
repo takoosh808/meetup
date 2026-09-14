@@ -10,3 +10,12 @@ describe("GET /health", () => {
     expect(res.body).toEqual({ status: "ok" });
   });
 });
+
+describe("GET /readyz", () => {
+  it("reports database readiness", async () => {
+    const app = createApp();
+    const res = await request(app).get("/readyz");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ status: "ready" });
+  });
+});

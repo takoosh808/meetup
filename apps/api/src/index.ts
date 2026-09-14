@@ -2,7 +2,7 @@ import cors from "cors";
 import "dotenv/config";
 import express from "express";
 import { authRouter } from "./auth/routes";
-import { ensureSchema } from "./db";
+import { checkDatabaseConnection, ensureSchema } from "./db";
 import { sessionRouter } from "./sessions/routes";
 import { notificationRouter } from "./notifications/routes";
 import { communityRouter } from "./community/routes";
@@ -14,6 +14,15 @@ export function createApp() {
 
   app.get("/health", (_req, res) => {
     res.json({ status: "ok" });
+  });
+
+  app.get("/readyz", async (_req, res) => {
+    try {
+      await checkDatabaseConnection();
+      res.json({ status: "ready" });
+    } catch {
+      res.status(503).json({ status: "not_ready" });
+    }
   });
 
   app.use("/auth", authRouter);
