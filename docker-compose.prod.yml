@@ -15,6 +15,7 @@ services:
       retries: 10
 
   api:
+    image: meetup-api-prod
     build:
       context: ./apps/api
       dockerfile: Dockerfile.prod
@@ -23,6 +24,7 @@ services:
       PORT: 4000
       DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      WEB_ORIGIN: ${WEB_ORIGIN:?WEB_ORIGIN is required}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-}
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
@@ -38,6 +40,7 @@ services:
       retries: 5
 
   web:
+    image: meetup-web-prod
     build:
       context: ./apps/web
       dockerfile: Dockerfile.prod

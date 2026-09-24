@@ -9,7 +9,20 @@ import { communityRouter } from "./community/routes";
 
 export function createApp() {
   const app = express();
-  app.use(cors());
+  const allowedOrigins = (process.env.WEB_ORIGIN ?? "http://localhost:5173")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  app.use(cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error("CORS origin not allowed"));
+    },
+  }));
   app.use(express.json());
 
   app.get("/health", (_req, res) => {

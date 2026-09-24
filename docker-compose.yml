@@ -17,6 +17,7 @@ services:
       retries: 10
 
   api:
+    image: meetup-api-dev
     build:
       context: ./apps/api
       dockerfile: Dockerfile.dev
@@ -25,6 +26,7 @@ services:
       PORT: ${API_PORT:-4000}
       DATABASE_URL: ${DATABASE_URL:-postgres://meetup:meetup@db:5432/meetup}
       JWT_SECRET: ${JWT_SECRET:-dev-only-change-me}
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:5173}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:dev@example.com}
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
@@ -44,6 +46,7 @@ services:
       retries: 5
 
   web:
+    image: meetup-web-dev
     build:
       context: ./apps/web
       dockerfile: Dockerfile.dev
