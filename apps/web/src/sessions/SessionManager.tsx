@@ -253,48 +253,30 @@ export function SessionManager() {
       ) : <p className="empty-state">No event is live. Create an event, then start hosting it here.</p>}
 
       <div className="session-list previous-events">
-        <h3>Previous events</h3>
-        {previousSessions.length === 0 ? <p className="empty-state">No previous events yet.</p> : previousSessions.map((session) => (
+        <h3>All events</h3>
+        {sessions.length === 0 ? <p className="empty-state">No events yet.</p> : sessions.map((session) => (
           <article className="session-row" key={session.id}>
-            <div><p className="session-status">Ended</p><h3>{session.title}</h3><p>{new Date(session.scheduled_at).toLocaleString()}</p></div>
-            <span>{session.checked_in_count ?? 0} checked in</span>
+            <div><p className="session-status">{session.status}</p><h3>{session.title}</h3><p>{new Date(session.scheduled_at).toLocaleString()}</p></div>
+            <div className="host-live-summary">
+              <span>{session.checked_in_count ?? 0} checked in</span>
+              <span>{session.heading_there_count ?? 0} heading there</span>
+            </div>
           </article>
         ))}
       </div>
       </>}
 
-      {activeView === "create" && <div className="session-list">
-        {sessions.length === 0 ? (
-          <p className="empty-state">No sessions yet. Start with your Sunday volleyball meetup.</p>
-        ) : (
-          sessions.map((session) => (
+      {activeView === "host" && sessions.some((session) => session.status === "scheduled") && (
+        <div className="session-list scheduled-events">
+          <h3>Scheduled events</h3>
+          {sessions.filter((session) => session.status === "scheduled").map((session) => (
             <article className="session-row" key={session.id}>
-              <div>
-                <p className="session-status" aria-live="polite">{session.status}</p>
-                <h3>{session.title}</h3>
-                <p>{new Date(session.scheduled_at).toLocaleString()}</p>
-              </div>
-              {session.status === "live" && (
-                <div className="host-live-summary">
-                  <span><strong>{session.checked_in_count ?? 0}</strong> checked in</span>
-                  <span><strong>{session.heading_there_count ?? 0}</strong> heading there</span>
-                  <span>{session.duration_minutes} min event</span>
-                </div>
-              )}
-              {session.status === "scheduled" && (
-                <button type="button" className="text-action" onClick={() => updateStatus(session.id, "start")}>
-                  Start
-                </button>
-              )}
-              {session.status === "live" && (
-                <button type="button" className="text-action" onClick={() => updateStatus(session.id, "end")}>
-                  End
-                </button>
-              )}
+              <div><p className="session-status">Scheduled</p><h3>{session.title}</h3><p>{new Date(session.scheduled_at).toLocaleString()}</p></div>
+              <button type="button" className="text-action" onClick={() => updateStatus(session.id, "start")}>Start</button>
             </article>
-          ))
-        )}
-      </div>}
+          ))}
+        </div>
+      )}
     </section>
   );
 }
