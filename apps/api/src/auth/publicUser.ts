@@ -3,6 +3,7 @@ export interface PublicUser {
   email: string;
   displayName: string;
   avatarUrl: string | null;
+  isAdmin: boolean;
   createdAt: string;
 }
 
@@ -11,6 +12,7 @@ export function toPublicUser(user: {
   email: string;
   display_name: string;
   avatar_url: string | null;
+  is_admin: boolean;
   created_at: string;
 }): PublicUser {
   return {
@@ -18,6 +20,7 @@ export function toPublicUser(user: {
     email: user.email,
     displayName: user.display_name,
     avatarUrl: user.avatar_url,
+    isAdmin: user.is_admin,
     createdAt: user.created_at,
   };
 }

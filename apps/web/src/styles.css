@@ -820,3 +820,14 @@ summary:focus-visible,
 .skip-link:focus {
   transform: translateY(0);
 }
+
+.admin-hub h2 { margin: 0 0 18px; }
+.admin-hub h3 { margin: 24px 0 10px; }
+.admin-summary { display: flex; gap: 10px; flex-wrap: wrap; }
+.admin-summary span, .admin-row { padding: 12px 14px; background: #252525; border: 1px solid #3c3c3c; border-radius: 8px; }
+.admin-summary strong { color: #49dda9; }
+.admin-list { display: grid; gap: 8px; }
+.admin-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; color: #b8c0b8; }
+.admin-row div { display: grid; gap: 4px; }
+.admin-row strong { color: #f2f1ec; }
+.admin-row small { color: #b8c0b8; }

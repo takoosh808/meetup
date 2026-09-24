@@ -21,9 +21,14 @@ export async function ensureSchema() {
         password_hash TEXT NOT NULL,
         display_name TEXT NOT NULL,
         avatar_url TEXT,
+        is_admin BOOLEAN NOT NULL DEFAULT false,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
     `);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT false;`);
+    if (process.env.ADMIN_EMAIL) {
+      await client.query("UPDATE users SET is_admin = true WHERE email = $1", [process.env.ADMIN_EMAIL.trim().toLowerCase()]);
+    }
     await client.query(`
       CREATE TABLE IF NOT EXISTS sessions (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

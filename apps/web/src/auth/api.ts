@@ -4,6 +4,7 @@ export interface PublicUser {
   displayName: string;
   avatarUrl: string | null;
   createdAt: string;
+  isAdmin: boolean;
 }
 
 export interface AuthResponse {
@@ -31,6 +32,10 @@ export interface Friendship {
   incoming: boolean;
   priority_updates: boolean;
 }
+
+export interface AdminUser { id: string; email: string; display_name: string; is_admin: boolean; created_at: string; }
+export interface AdminEvent { id: string; title: string; activity_type: string; status: string; scheduled_at: string; host_name: string; attendee_count: number; }
+export interface AdminGroup { id: string; name: string; description: string | null; owner_name: string; member_count: number; }
 
 export type ActivityType = "volleyball" | "basketball" | "soccer" | "running" | "other";
 export type SessionStatus = "scheduled" | "live" | "ended";
@@ -242,6 +247,23 @@ export async function removePushSubscription(token: string, endpoint: string) {
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify({ endpoint }),
   });
+  return parseJsonOrThrow(res);
+}
+
+export async function fetchAdminUsers(token: string): Promise<{ users: AdminUser[] }> {
+  const res = await fetch(`${API_URL}/admin/users`, { headers: { Authorization: `Bearer ${token}` } });
+  return parseJsonOrThrow(res);
+}
+export async function fetchAdminEvents(token: string): Promise<{ events: AdminEvent[] }> {
+  const res = await fetch(`${API_URL}/admin/events`, { headers: { Authorization: `Bearer ${token}` } });
+  return parseJsonOrThrow(res);
+}
+export async function fetchAdminGroups(token: string): Promise<{ groups: AdminGroup[] }> {
+  const res = await fetch(`${API_URL}/admin/groups`, { headers: { Authorization: `Bearer ${token}` } });
+  return parseJsonOrThrow(res);
+}
+export async function endAdminEvent(token: string, eventId: string) {
+  const res = await fetch(`${API_URL}/admin/events/${eventId}/end`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
   return parseJsonOrThrow(res);
 }
 

@@ -6,6 +6,7 @@ import { checkDatabaseConnection, ensureSchema } from "./db";
 import { sessionRouter } from "./sessions/routes";
 import { notificationRouter } from "./notifications/routes";
 import { communityRouter } from "./community/routes";
+import { adminRouter } from "./admin/routes";
 
 export function createApp() {
   const app = express();
@@ -42,6 +43,7 @@ export function createApp() {
   app.use("/sessions", sessionRouter);
   app.use("/notifications", notificationRouter);
   app.use("/community", communityRouter);
+  app.use("/admin", adminRouter);
 
   return app;
 }

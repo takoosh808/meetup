@@ -5,10 +5,11 @@ import { ExploreView } from "../explore/ExploreView";
 import { NotificationSettings } from "../notifications/NotificationSettings";
 import { CommunityHub } from "../community/CommunityHub";
 import { ChangePasswordForm } from "./ChangePasswordForm";
+import { AdminHub } from "../admin/AdminHub";
 
 export function ProfileView() {
   const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<"explore" | "host" | "community" | "profile">("explore");
+  const [activeTab, setActiveTab] = useState<"explore" | "host" | "community" | "profile" | "admin">("explore");
   if (!user) return null;
 
   return (
@@ -28,6 +29,7 @@ export function ProfileView() {
           ["host", "Host"],
           ["community", "Community"],
           ["profile", "Profile"],
+          ...(user.isAdmin ? [["admin", "Admin"] as const] : []),
         ] as const).map(([tab, label]) => (
           <button
             className={activeTab === tab ? "dashboard-tab active" : "dashboard-tab"}
@@ -60,6 +62,7 @@ export function ProfileView() {
           </details>
         </section>
         )}
+        {activeTab === "admin" && user.isAdmin && <AdminHub />}
       </div>
     </>
   );
