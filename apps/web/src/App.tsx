@@ -7,6 +7,7 @@ import { ProfileView } from "./auth/ProfileView";
 function App() {
   const { user, isLoading } = useAuth();
   const [mode, setMode] = useState<"login" | "signup">("login");
+  const [loginNotice, setLoginNotice] = useState<string | null>(null);
 
   return (
     <main className="app-shell">
@@ -20,9 +21,20 @@ function App() {
         ) : user ? (
           <ProfileView />
         ) : mode === "login" ? (
-          <LoginForm onSwitchToSignup={() => setMode("signup")} />
+          <LoginForm
+            notice={loginNotice}
+            onSwitchToSignup={() => {
+              setLoginNotice(null);
+              setMode("signup");
+            }}
+          />
         ) : (
-          <SignupForm onSwitchToLogin={() => setMode("login")} />
+          <SignupForm
+            onSwitchToLogin={(message) => {
+              setLoginNotice(message ?? null);
+              setMode("login");
+            }}
+          />
         )}
       </section>
     </main>

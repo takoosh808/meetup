@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { useAuth } from "./AuthContext";
 
-export function SignupForm({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
+export function SignupForm({ onSwitchToLogin }: { onSwitchToLogin: (message?: string) => void }) {
   const { signup } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,6 +16,7 @@ export function SignupForm({ onSwitchToLogin }: { onSwitchToLogin: () => void })
     setIsSubmitting(true);
     try {
       await signup(email, password, displayName);
+      onSwitchToLogin("Account created. Log in with your new credentials.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Signup failed");
     } finally {
@@ -64,7 +65,7 @@ export function SignupForm({ onSwitchToLogin }: { onSwitchToLogin: () => void })
       </button>
       <p className="auth-switch">
         Already have an account?{" "}
-        <button className="text-action" type="button" onClick={onSwitchToLogin}>
+        <button className="text-action" type="button" onClick={() => onSwitchToLogin()}>
           Log in
         </button>
       </p>

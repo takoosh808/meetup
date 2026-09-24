@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { useAuth } from "./AuthContext";
 
-export function LoginForm({ onSwitchToSignup }: { onSwitchToSignup: () => void }) {
+export function LoginForm({ onSwitchToSignup, notice }: { onSwitchToSignup: () => void; notice?: string | null }) {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,6 +26,7 @@ export function LoginForm({ onSwitchToSignup }: { onSwitchToSignup: () => void }
     <form className="auth-form" onSubmit={handleSubmit}>
       <h2>Log in</h2>
       <p>Find people and plans happening nearby.</p>
+      {notice && <p className="success-message" role="status">{notice}</p>}
       <label>
         Email
         <input
