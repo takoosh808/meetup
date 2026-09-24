@@ -27,6 +27,11 @@ button {
   cursor: pointer;
 }
 
+:focus-visible {
+  outline: 3px solid #f2f1ec;
+  outline-offset: 3px;
+}
+
 .app-shell {
   display: grid;
   min-height: 100vh;
@@ -776,4 +781,25 @@ button {
   margin: 8px 0 0;
   color: #f2f1ec;
   font-size: 1rem;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+.leaflet-control a:focus-visible {
+  outline: 3px solid #f2f1ec;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

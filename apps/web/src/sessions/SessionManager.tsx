@@ -202,7 +202,7 @@ export function SessionManager() {
           sessions.map((session) => (
             <article className="session-row" key={session.id}>
               <div>
-                <p className="session-status">{session.status}</p>
+                <p className="session-status" aria-live="polite">{session.status}</p>
                 <h3>{session.title}</h3>
                 <p>{new Date(session.scheduled_at).toLocaleString()}</p>
               </div>
