@@ -13,6 +13,7 @@ export function ProfileView() {
 
   return (
     <>
+      <a className="skip-link" href="#dashboard-content">Skip to dashboard content</a>
       <section className="profile-summary">
         <div>
           <p className="eyebrow">Profile</p>
@@ -39,10 +40,11 @@ export function ProfileView() {
           </button>
         ))}
       </nav>
-      {activeTab === "explore" && <ExploreView />}
-      {activeTab === "host" && <SessionManager />}
-      {activeTab === "community" && <CommunityHub />}
-      {activeTab === "profile" && (
+      <div id="dashboard-content" tabIndex={-1}>
+        {activeTab === "explore" && <ExploreView />}
+        {activeTab === "host" && <SessionManager />}
+        {activeTab === "community" && <CommunityHub />}
+        {activeTab === "profile" && (
         <section className="profile-settings" aria-labelledby="profile-settings-heading">
           <p className="eyebrow">Account</p>
           <h2 id="profile-settings-heading">Profile details</h2>
@@ -57,7 +59,8 @@ export function ProfileView() {
             <ChangePasswordForm />
           </details>
         </section>
-      )}
+        )}
+      </div>
     </>
   );
 }

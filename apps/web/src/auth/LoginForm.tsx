@@ -30,6 +30,7 @@ export function LoginForm({ onSwitchToSignup }: { onSwitchToSignup: () => void }
         Email
         <input
           type="email"
+          autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -39,6 +40,7 @@ export function LoginForm({ onSwitchToSignup }: { onSwitchToSignup: () => void }
         Password
         <input
           type="password"
+          autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required

@@ -804,3 +804,19 @@ summary:focus-visible,
     animation-iteration-count: 1 !important;
   }
 }
+
+.skip-link {
+  position: fixed;
+  z-index: 1000;
+  top: 8px;
+  left: 8px;
+  padding: 10px 14px;
+  color: #05281e;
+  background: #49dda9;
+  border-radius: 6px;
+  transform: translateY(-150%);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}

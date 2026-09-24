@@ -31,6 +31,7 @@ export function SignupForm({ onSwitchToLogin }: { onSwitchToLogin: () => void })
         Display name
         <input
           type="text"
+          autoComplete="name"
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           required
@@ -40,6 +41,7 @@ export function SignupForm({ onSwitchToLogin }: { onSwitchToLogin: () => void })
         Email
         <input
           type="email"
+          autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -49,6 +51,7 @@ export function SignupForm({ onSwitchToLogin }: { onSwitchToLogin: () => void })
         Password
         <input
           type="password"
+          autoComplete="new-password"
           minLength={8}
           value={password}
           onChange={(e) => setPassword(e.target.value)}

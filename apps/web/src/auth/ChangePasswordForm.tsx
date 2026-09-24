@@ -37,9 +37,9 @@ export function ChangePasswordForm() {
 
   return (
     <form className="password-form" onSubmit={handleSubmit}>
-      <label>Current password<input type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required /></label>
-      <label>New password<input type="password" minLength={8} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} required /></label>
-      <label>Confirm new password<input type="password" minLength={8} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} required /></label>
+      <label>Current password<input type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required /></label>
+      <label>New password<input type="password" autoComplete="new-password" minLength={8} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} required /></label>
+      <label>Confirm new password<input type="password" autoComplete="new-password" minLength={8} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} required /></label>
       {error && <p className="auth-error" role="alert">{error}</p>}
       {message && <p className="success-message" role="status">{message}</p>}
       <button className="primary-action" type="submit" disabled={isSubmitting}>{isSubmitting ? "Changing password..." : "Update password"}</button>
