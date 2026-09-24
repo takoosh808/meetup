@@ -896,6 +896,20 @@ button {
   font-size: 1rem;
 }
 
+.community-event-panel {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 14px;
+  background: #1d1d1d;
+  border: 1px solid #49dda9;
+  border-radius: 8px;
+}
+
+.community-event-panel h3 { margin: 0 0 4px; }
+.community-event { display: grid; gap: 4px; padding: 12px; background: #252525; border: 1px solid #3c3c3c; border-radius: 6px; }
+.community-event span { color: #b8c0b8; font-size: 0.84rem; text-transform: capitalize; }
+
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,

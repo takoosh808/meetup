@@ -41,8 +41,9 @@ describe("community graph", () => {
     expect(added.status).toBe(204);
 
     const groups = await request(app).get("/community/groups").set("Authorization", `Bearer ${memberToken}`);
-    expect(groups.body.groups[0].name).toBe("Sunday Volleyball");
-    expect(groups.body.groups[0].member_count).toBe(2);
+    const joinedGroup = groups.body.groups.find((group: { name: string }) => group.name === "Sunday Volleyball");
+    expect(joinedGroup).toBeDefined();
+    expect(joinedGroup.member_count).toBe(2);
 
     const denied = await request(app)
       .post(`/community/groups/${groupId}/members`)

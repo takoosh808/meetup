@@ -32,6 +32,7 @@ export interface Friendship {
   incoming: boolean;
   priority_updates: boolean;
 }
+export interface CommunityEvent { id: string; title: string; activity_type: string; status: string; scheduled_at: string; duration_minutes: number; }
 
 export interface AdminUser { id: string; email: string; display_name: string; is_admin: boolean; created_at: string; }
 export interface AdminEvent { id: string; title: string; activity_type: string; status: string; scheduled_at: string; host_name: string; attendee_count: number; }
@@ -340,5 +341,18 @@ export async function decideFriendRequest(token: string, requesterId: string, de
 
 export async function setFriendPriority(token: string, friendId: string, priority: boolean) {
   const res = await fetch(`${API_URL}/community/friends/${friendId}/priority`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ priority }) });
+  return parseJsonOrThrow(res);
+}
+
+export async function fetchGroupEvents(token: string, groupId: string): Promise<{ events: CommunityEvent[] }> {
+  const res = await fetch(`${API_URL}/community/groups/${groupId}/events`, { headers: { Authorization: `Bearer ${token}` } });
+  return parseJsonOrThrow(res);
+}
+export async function fetchFriendEvents(token: string, friendId: string): Promise<{ events: CommunityEvent[] }> {
+  const res = await fetch(`${API_URL}/community/friends/${friendId}/events`, { headers: { Authorization: `Bearer ${token}` } });
+  return parseJsonOrThrow(res);
+}
+export async function findUserByUsername(token: string, username: string): Promise<{ user: { id: string; display_name: string } }> {
+  const res = await fetch(`${API_URL}/community/friends/by-username?username=${encodeURIComponent(username)}`, { headers: { Authorization: `Bearer ${token}` } });
   return parseJsonOrThrow(res);
 }

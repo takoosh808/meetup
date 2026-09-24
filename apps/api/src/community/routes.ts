@@ -11,6 +11,9 @@ import {
   setFriendPriority,
   setGroupPriority,
   updateFriendRequest,
+  findUserByUsername,
+  listFriendEvents,
+  listGroupEvents,
 } from "./repository";
 
 const groupSchema = z.object({
@@ -74,4 +77,20 @@ communityRouter.post("/friends/requests/:requesterId/reject", async (req, res) =
 communityRouter.post("/friends/:friendId/priority", async (req, res) => {
   await setFriendPriority(req.userId!, req.params.friendId, Boolean(req.body.priority));
   res.status(204).send();
+});
+
+communityRouter.get("/groups/:groupId/events", async (req, res) => {
+  res.json({ events: await listGroupEvents(req.params.groupId) });
+});
+
+communityRouter.get("/friends/by-username", async (req, res) => {
+  const username = z.string().trim().min(1).safeParse(req.query.username);
+  if (!username.success) return res.status(400).json({ error: "Username is required" });
+  const user = await findUserByUsername(username.data, req.userId!);
+  if (!user) return res.status(404).json({ error: "User not found" });
+  res.json({ user });
+});
+
+communityRouter.get("/friends/:friendId/events", async (req, res) => {
+  res.json({ events: await listFriendEvents(req.params.friendId) });
 });

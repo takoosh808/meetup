@@ -112,3 +112,33 @@ export async function isGroupOwner(groupId: string, userId: string) {
   const result = await pool.query("SELECT 1 FROM groups WHERE id = $1 AND owner_id = $2", [groupId, userId]);
   return result.rowCount === 1;
 }
+
+export async function findUserByUsername(displayName: string, currentUserId: string) {
+  const result = await pool.query<{ id: string; display_name: string }>(
+    `SELECT id, display_name FROM users
+     WHERE lower(display_name) = lower($1) AND id <> $2
+     LIMIT 1`,
+    [displayName.trim(), currentUserId]
+  );
+  return result.rows[0] ?? null;
+}
+
+export async function listGroupEvents(groupId: string) {
+  const result = await pool.query(
+    `SELECT id, title, activity_type, status, scheduled_at, duration_minutes
+     FROM sessions WHERE group_id = $1 AND status IN ('scheduled', 'live')
+     ORDER BY scheduled_at ASC LIMIT 50`,
+    [groupId]
+  );
+  return result.rows;
+}
+
+export async function listFriendEvents(friendId: string) {
+  const result = await pool.query(
+    `SELECT id, title, activity_type, status, scheduled_at, duration_minutes
+     FROM sessions WHERE host_id = $1 AND status IN ('scheduled', 'live')
+     ORDER BY scheduled_at ASC LIMIT 50`,
+    [friendId]
+  );
+  return result.rows;
+}
