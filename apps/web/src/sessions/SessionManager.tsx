@@ -6,7 +6,6 @@ import {
   createSession,
   fetchMySessions,
   sendHostLocation,
-  updateLiveTimeLimit,
   type ActivityType,
   fetchGroups,
   type Session,
@@ -30,7 +29,6 @@ export function SessionManager() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [groupId, setGroupId] = useState("");
   const [activeView, setActiveView] = useState<"create" | "host">("create");
-  const [timeLimitMinutes, setTimeLimitMinutes] = useState(120);
 
   useEffect(() => {
     if (!token) return;
@@ -149,16 +147,6 @@ export function SessionManager() {
     }
   }
 
-  async function updateTimeLimit() {
-    if (!token || !liveSession) return;
-    try {
-      const response = await updateLiveTimeLimit(token, liveSession.id, timeLimitMinutes);
-      setSessions((current) => current.map((session) => session.id === liveSession.id ? response.session : session));
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Unable to update time limit");
-    }
-  }
-
   const liveSession = sessions.find((session) => session.status === "live");
   const remainingMinutes = liveSession
     ? Math.max(0, Math.ceil((new Date(liveSession.scheduled_at).getTime() + liveSession.duration_minutes * 60000 - Date.now()) / 60000))
@@ -225,17 +213,7 @@ export function SessionManager() {
             </select>
           </label>
         )}
-        <div className="location-control">
-          <div>
-            <p className="location-label">Map anchor</p>
-            <p className="location-help">
-              {anchor ? "Location captured. This event will use this anchor." : "Required. Your event needs a location anchor."}
-            </p>
-          </div>
-          <button className="secondary-action" type="button" onClick={captureAnchor} disabled={isLocating}>
-            {isLocating ? "Locating..." : anchor ? "Update location" : "Use my location"}
-          </button>
-        </div>
+        <p className="location-help">Your current location is required and will remain active while hosting.</p>
         {error && <p className="auth-error" role="alert">{error}</p>}
         <button className="primary-action" type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Creating session..." : "Create session"}
@@ -254,9 +232,6 @@ export function SessionManager() {
             <span><strong>{liveSession.heading_there_count ?? 0}</strong><small>Heading there</small></span>
             <span><strong>{remainingMinutes}</strong><small>Minutes remaining</small></span>
           </div>
-          <label className="time-limit-control">Event time limit (minutes)
-            <input type="number" min={15} max={720} value={timeLimitMinutes} onChange={(event) => setTimeLimitMinutes(Number(event.target.value))} onBlur={() => void updateTimeLimit()} />
-          </label>
           <button className="secondary-action danger-action" type="button" onClick={() => void updateStatus(liveSession.id, "end")}>End event</button>
         </aside>
       ) : <p className="empty-state">No event is live. Create an event, then start hosting it here.</p>}
