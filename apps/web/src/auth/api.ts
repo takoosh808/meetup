@@ -262,6 +262,14 @@ export async function fetchAdminGroups(token: string): Promise<{ groups: AdminGr
   const res = await fetch(`${API_URL}/admin/groups`, { headers: { Authorization: `Bearer ${token}` } });
   return parseJsonOrThrow(res);
 }
+export async function updateAdminUser(token: string, userId: string, user: { email: string; displayName: string; isAdmin: boolean }) {
+  const res = await fetch(`${API_URL}/admin/users/${userId}`, { method: "PATCH", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify(user) });
+  return parseJsonOrThrow(res);
+}
+export async function deleteAdminUser(token: string, userId: string) {
+  const res = await fetch(`${API_URL}/admin/users/${userId}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+  return parseJsonOrThrow(res);
+}
 export async function endAdminEvent(token: string, eventId: string) {
   const res = await fetch(`${API_URL}/admin/events/${eventId}/end`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
   return parseJsonOrThrow(res);

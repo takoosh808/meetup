@@ -39,4 +39,22 @@ describe("admin routes", () => {
     expect(groups.status).toBe(200);
     expect(users.body.users.some((entry: { email: string }) => entry.email === adminEmail)).toBe(true);
   });
+
+  it("allows admins to edit and remove users but not themselves", async () => {
+    const headers = { Authorization: `Bearer ${adminToken}` };
+    const listed = await request(app).get("/admin/users").set(headers);
+    const target = listed.body.users.find((entry: { email: string }) => entry.email === userEmail);
+    const updated = await request(app)
+      .patch(`/admin/users/${target.id}`)
+      .set(headers)
+      .send({ email: userEmail, displayName: "Edited User", isAdmin: false });
+    expect(updated.status).toBe(200);
+    expect(updated.body.user.display_name).toBe("Edited User");
+
+    const selfDelete = await request(app).delete(`/admin/users/${listed.body.users.find((entry: { email: string }) => entry.email === adminEmail).id}`).set(headers);
+    expect(selfDelete.status).toBe(400);
+
+    const removed = await request(app).delete(`/admin/users/${target.id}`).set(headers);
+    expect(removed.status).toBe(204);
+  });
 });

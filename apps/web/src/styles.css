@@ -831,3 +831,8 @@ summary:focus-visible,
 .admin-row div { display: grid; gap: 4px; }
 .admin-row strong { color: #f2f1ec; }
 .admin-row small { color: #b8c0b8; }
+.admin-row-actions { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.admin-edit-fields { display: grid; flex: 1; gap: 8px; }
+.admin-edit-fields input:not([type="checkbox"]) { min-height: 40px; padding: 0 10px; color: #f2f1ec; background: #292929; border: 1px solid #494949; border-radius: 6px; }
+.admin-edit-fields label { color: #b8c0b8; font-size: 0.85rem; }
+.danger-action { color: #ffc1ba; border-color: #784039; }

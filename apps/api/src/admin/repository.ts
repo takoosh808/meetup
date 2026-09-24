@@ -8,6 +8,22 @@ export async function listUsers() {
   return result.rows;
 }
 
+export async function updateUser(userId: string, params: { email: string; displayName: string; isAdmin: boolean }) {
+  const result = await pool.query(
+    `UPDATE users SET email = $2, display_name = $3, is_admin = $4
+     WHERE id = $1
+     RETURNING id, email, display_name, is_admin, created_at`,
+    [userId, params.email, params.displayName, params.isAdmin]
+  );
+  return result.rows[0] ?? null;
+}
+
+export async function deleteUser(userId: string, adminId: string) {
+  if (userId === adminId) return false;
+  const result = await pool.query("DELETE FROM users WHERE id = $1 AND id <> $2", [userId, adminId]);
+  return result.rowCount === 1;
+}
+
 export async function listEvents() {
   const result = await pool.query(`
     SELECT sessions.id, sessions.title, sessions.activity_type, sessions.status,
