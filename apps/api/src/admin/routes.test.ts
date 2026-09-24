@@ -67,4 +67,14 @@ describe("admin routes", () => {
     expect(deletedEvent.status).toBe(204);
     expect(deletedGroup.status).toBe(204);
   });
+
+  it("allows a group to be removed before its previous event", async () => {
+    const headers = { Authorization: `Bearer ${adminToken}` };
+    const group = await pool.query<{ id: string }>("INSERT INTO groups (owner_id, name) VALUES ((SELECT id FROM users WHERE email = $1), $2) RETURNING id", [adminEmail, `Linked Group ${Date.now()}`]);
+    const event = await pool.query<{ id: string }>("INSERT INTO sessions (host_id, group_id, title, activity_type, scheduled_at, status, broadcast_radius_m, checkin_radius_m, shutoff_radius_m) VALUES ((SELECT id FROM users WHERE email = $1), $2, $3, 'other', now(), 'ended', 150, 40, 300) RETURNING id", [adminEmail, group.rows[0].id, `Linked Event ${Date.now()}`]);
+    const deletedGroup = await request(app).delete(`/admin/groups/${group.rows[0].id}`).set(headers);
+    const deletedEvent = await request(app).delete(`/admin/events/${event.rows[0].id}`).set(headers);
+    expect(deletedGroup.status).toBe(204);
+    expect(deletedEvent.status).toBe(204);
+  });
 });

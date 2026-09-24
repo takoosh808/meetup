@@ -72,6 +72,17 @@ export async function deletePreviousEvent(eventId: string) {
 }
 
 export async function deleteGroup(groupId: string) {
-  const result = await pool.query("DELETE FROM groups WHERE id = $1 RETURNING id", [groupId]);
-  return result.rowCount === 1;
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("UPDATE sessions SET group_id = NULL WHERE group_id = $1", [groupId]);
+    const result = await client.query("DELETE FROM groups WHERE id = $1 RETURNING id", [groupId]);
+    await client.query("COMMIT");
+    return result.rowCount === 1;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
