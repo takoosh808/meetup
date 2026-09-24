@@ -8,6 +8,7 @@ import {
   fetchSessionDirections,
   sendSessionLocation,
   toggleSessionRsvp,
+  type ActivityType,
   type Session,
 } from "../auth/api";
 
@@ -24,6 +25,7 @@ export function ExploreView() {
   const markers = useRef<L.LayerGroup | null>(null);
   const latestPosition = useRef<GeolocationPosition | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [activityFilter, setActivityFilter] = useState<ActivityType | "all">("all");
   const [center, setCenter] = useState<[number, number]>(defaultCenter);
   const [locationState, setLocationState] = useState("Showing nearby events");
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +38,7 @@ export function ExploreView() {
   const isCheckedIn = selectedSession?.current_user_rsvp === "checked_in";
   const [isWithinCheckinRadius, setIsWithinCheckinRadius] = useState(false);
   const [locationDiagnostic, setLocationDiagnostic] = useState<{ distanceM: number; checkinRadiusM: number } | null>(null);
+  const visibleSessions = sessions.filter((session) => activityFilter === "all" || session.activity_type === activityFilter);
 
   useEffect(() => {
     if (!mapElement.current || map.current) return;
@@ -120,7 +123,7 @@ export function ExploreView() {
     if (!map.current || !markers.current) return;
     if (!mapElement.current?.clientWidth || !mapElement.current.clientHeight) return;
     markers.current.clearLayers();
-    sessions.forEach((session) => {
+    visibleSessions.forEach((session) => {
       if (session.map_latitude === undefined || session.map_longitude === undefined) return;
       const marker = L.circleMarker([session.map_latitude, session.map_longitude], {
         radius: session.status === "live" ? 10 : 8,
@@ -149,7 +152,7 @@ export function ExploreView() {
       }
     });
     L.circle(center, { radius: 150, color: "#49dda9", weight: 1, fillOpacity: 0.06 }).addTo(markers.current);
-  }, [center, sessions]);
+  }, [center, visibleSessions]);
 
   useEffect(() => {
     if (!token || !selectedSession || !isAttendanceActive(selectedSession) || !navigator.geolocation?.watchPosition) {
@@ -256,6 +259,21 @@ export function ExploreView() {
         </div>
         <span className="location-state">{locationState}</span>
       </div>
+      <div className="explore-filter">
+        <label htmlFor="activity-filter">Activity filter</label>
+        <select
+          id="activity-filter"
+          value={activityFilter}
+          onChange={(event) => setActivityFilter(event.target.value as ActivityType | "all")}
+        >
+          <option value="all">All activities</option>
+          <option value="volleyball">Volleyball</option>
+          <option value="basketball">Basketball</option>
+          <option value="soccer">Soccer</option>
+          <option value="running">Running</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
       <div className="map-frame" aria-label="Nearby meetup map" ref={mapElement} />
       <p className="map-help">Green ring: your discovery area. Event rings: exact check-in radius.</p>
       {error && <p className="auth-error" role="alert">{error}</p>}
@@ -300,10 +318,10 @@ export function ExploreView() {
         </article>
       )}
       <div className="nearby-list">
-        {sessions.length === 0 ? (
-          <p className="empty-state">Nothing live nearby yet. Host the first plan.</p>
+        {visibleSessions.length === 0 ? (
+          <p className="empty-state">No {activityFilter === "all" ? "plans" : `${activityFilter} plans`} nearby yet. Host the first plan.</p>
         ) : (
-          sessions.map((session) => (
+          visibleSessions.map((session) => (
             <button className="nearby-row" key={session.id} type="button" onClick={() => {
               setSelectedSession(session);
               setIsHeadingThere(isAttendanceActive(session));

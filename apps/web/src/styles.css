@@ -294,10 +294,29 @@ button {
   font-size: 0.82rem;
 }
 
+.explore-filter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  color: #b8c0b8;
+  font-size: 0.86rem;
+}
+
+.explore-filter select {
+  min-height: 40px;
+  padding: 0 10px;
+  color: #f2f1ec;
+  background: #252525;
+  border: 1px solid #3c3c3c;
+  border-radius: 6px;
+}
+
 .map-frame {
   height: 320px;
   min-height: 280px;
-  margin-top: 18px;
+  margin-top: 12px;
   overflow: hidden;
   background: #202b28;
   border: 1px solid #3c3c3c;

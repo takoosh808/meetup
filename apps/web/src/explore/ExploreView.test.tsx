@@ -29,6 +29,24 @@ describe("ExploreView", () => {
             checked_in_count: 2,
             current_user_rsvp: null,
           },
+          {
+            id: "session-2",
+            title: "Evening Basketball",
+            activity_type: "basketball",
+            description: "Half-court games",
+            status: "scheduled",
+            scheduled_at: "2026-09-06T18:00:00.000Z",
+            broadcast_radius_m: 150,
+            checkin_radius_m: 40,
+            shutoff_radius_m: 300,
+            started_at: null,
+            ended_at: null,
+            map_latitude: 34.021,
+            map_longitude: -118.49,
+            heading_there_count: 0,
+            checked_in_count: 0,
+            current_user_rsvp: null,
+          },
         ],
       }) };
     }));
@@ -56,5 +74,18 @@ describe("ExploreView", () => {
     expect(screen.getByRole("article", { name: "Session details" })).toHaveTextContent("2");
     fireEvent.click(screen.getByRole("button", { name: "I'm heading there" }));
     expect(await screen.findByRole("button", { name: "Heading there" })).toBeInTheDocument();
+  });
+
+  it("filters nearby sessions by activity", async () => {
+    render(
+      <AuthProvider>
+        <ExploreView />
+      </AuthProvider>
+    );
+
+    expect(await screen.findByText("Evening Basketball")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Activity filter"), { target: { value: "basketball" } });
+    expect(screen.getByText("Evening Basketball")).toBeInTheDocument();
+    expect(screen.queryByText("Sunday Beach Volleyball")).not.toBeInTheDocument();
   });
 });
