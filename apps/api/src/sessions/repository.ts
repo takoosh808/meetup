@@ -21,20 +21,28 @@ export interface SessionRecord {
   heading_there_count?: number;
   current_user_rsvp?: "heading_there" | "checked_in" | "cancelled" | null;
   has_anchor?: boolean;
+  checked_in_count?: number;
 }
 
 const sessionColumns = `
-  id, host_id, title, activity_type, description, status, scheduled_at,
+  id, host_id, title, activity_type, description, status, scheduled_at, duration_minutes,
   broadcast_radius_m, checkin_radius_m, shutoff_radius_m, started_at, ended_at, created_at,
   anchor_location IS NOT NULL AS has_anchor
 `;
 
 const nearbySessionColumns = `
   sessions.id, sessions.host_id, sessions.title, sessions.activity_type,
-  sessions.description, sessions.status, sessions.scheduled_at,
+  sessions.description, sessions.status, sessions.scheduled_at, sessions.duration_minutes,
   sessions.broadcast_radius_m, sessions.checkin_radius_m, sessions.shutoff_radius_m,
   sessions.started_at, sessions.ended_at, sessions.created_at,
   sessions.anchor_location IS NOT NULL AS has_anchor
+`;
+
+const hostSessionColumns = `
+  sessions.id, sessions.host_id, sessions.title, sessions.activity_type,
+  sessions.description, sessions.status, sessions.scheduled_at, sessions.duration_minutes,
+  sessions.broadcast_radius_m, sessions.checkin_radius_m, sessions.shutoff_radius_m,
+  sessions.started_at, sessions.ended_at, sessions.created_at
 `;
 
 export async function createSession(params: {
@@ -46,18 +54,19 @@ export async function createSession(params: {
   broadcastRadiusM: number;
   checkinRadiusM: number;
   shutoffRadiusM: number;
+  durationMinutes: number;
   anchor?: { latitude: number; longitude: number };
   groupId?: string;
 }): Promise<SessionRecord> {
   const result = await pool.query<SessionRecord>(
     `INSERT INTO sessions (
        host_id, title, activity_type, description, scheduled_at,
-       broadcast_radius_m, checkin_radius_m, shutoff_radius_m, anchor_location, group_id
+       broadcast_radius_m, checkin_radius_m, shutoff_radius_m, anchor_location, group_id, duration_minutes
      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8,
        CASE WHEN $9::double precision IS NULL OR $10::double precision IS NULL
          THEN NULL
          ELSE ST_SetSRID(ST_MakePoint($10, $9), 4326)::geography
-      END, $11)
+      END, $11, $12)
      RETURNING ${sessionColumns}`,
     [
       params.hostId,
@@ -71,6 +80,7 @@ export async function createSession(params: {
       params.anchor?.latitude ?? null,
       params.anchor?.longitude ?? null,
       params.groupId ?? null,
+      params.durationMinutes,
     ]
   );
   return result.rows[0];
@@ -78,7 +88,14 @@ export async function createSession(params: {
 
 export async function listSessionsByHost(hostId: string): Promise<SessionRecord[]> {
   const result = await pool.query<SessionRecord>(
-    `SELECT ${sessionColumns} FROM sessions WHERE host_id = $1 ORDER BY scheduled_at ASC`,
+    `SELECT ${hostSessionColumns},
+       COUNT(attendance.user_id) FILTER (WHERE attendance.rsvp_status = 'checked_in')::integer AS checked_in_count,
+       COUNT(attendance.user_id) FILTER (WHERE attendance.rsvp_status = 'heading_there')::integer AS heading_there_count
+     FROM sessions
+     LEFT JOIN session_attendance attendance ON attendance.session_id = sessions.id
+     WHERE sessions.host_id = $1
+     GROUP BY sessions.id
+    ORDER BY sessions.scheduled_at ASC`,
     [hostId]
   );
   return result.rows;

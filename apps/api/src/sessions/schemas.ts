@@ -14,6 +14,7 @@ export const createSessionSchema = z
     activityType: z.enum(activityTypes),
     description: z.string().trim().max(500).optional(),
     scheduledAt: z.string().datetime({ offset: true }),
+    durationMinutes: z.number().int().min(15).max(720).default(120),
     broadcastRadiusM: z.number().int().min(50).max(1000).default(150),
     checkinRadiusM: z.number().int().min(10).max(200).default(40),
     shutoffRadiusM: z.number().int().min(100).max(5000).default(300),

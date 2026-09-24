@@ -47,6 +47,7 @@ export interface Session {
   description: string | null;
   status: SessionStatus;
   scheduled_at: string;
+  duration_minutes: number;
   broadcast_radius_m: number;
   checkin_radius_m: number;
   shutoff_radius_m: number;
@@ -55,6 +56,7 @@ export interface Session {
   map_latitude?: number;
   map_longitude?: number;
   heading_there_count?: number;
+  checked_in_count?: number;
   current_user_rsvp?: "heading_there" | "checked_in" | "cancelled" | null;
   has_anchor?: boolean;
 }
@@ -64,6 +66,7 @@ export interface CreateSessionInput {
   activityType: ActivityType;
   description?: string;
   scheduledAt: string;
+  durationMinutes: number;
   broadcastRadiusM: number;
   checkinRadiusM: number;
   shutoffRadiusM: number;

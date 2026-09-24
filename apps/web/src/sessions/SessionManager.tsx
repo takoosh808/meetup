@@ -21,6 +21,7 @@ export function SessionManager() {
   const [activityType, setActivityType] = useState<ActivityType>("volleyball");
   const [description, setDescription] = useState("Open play at the south courts.");
   const [scheduledAt, setScheduledAt] = useState(defaultScheduledTime);
+  const [durationMinutes, setDurationMinutes] = useState(120);
   const [error, setError] = useState<string | null>(null);
   const [anchor, setAnchor] = useState<{ latitude: number; longitude: number }>();
   const [isLocating, setIsLocating] = useState(false);
@@ -36,6 +37,13 @@ export function SessionManager() {
         setError(requestError instanceof Error ? requestError.message : "Unable to load sessions");
       });
     fetchGroups(token).then((response) => setGroups(response.groups)).catch(() => undefined);
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    const refresh = () => fetchMySessions(token).then((response) => setSessions(response.sessions)).catch(() => undefined);
+    const intervalId = window.setInterval(refresh, 15000);
+    return () => window.clearInterval(intervalId);
   }, [token]);
 
   useEffect(() => {
@@ -80,6 +88,7 @@ export function SessionManager() {
         activityType,
         description,
         scheduledAt: new Date(scheduledAt).toISOString(),
+        durationMinutes,
         broadcastRadiusM: 150,
         checkinRadiusM: 40,
         shutoffRadiusM: 300,
@@ -127,6 +136,11 @@ export function SessionManager() {
     }
   }
 
+  const liveSession = sessions.find((session) => session.status === "live");
+  const remainingMinutes = liveSession
+    ? Math.max(0, Math.ceil((new Date(liveSession.scheduled_at).getTime() + liveSession.duration_minutes * 60000 - Date.now()) / 60000))
+    : 0;
+
   return (
     <section className="sessions" aria-labelledby="session-heading">
       <div className="section-heading">
@@ -169,6 +183,10 @@ export function SessionManager() {
           Details
           <textarea value={description} onChange={(event) => setDescription(event.target.value)} />
         </label>
+        <label>
+          Event length (minutes)
+          <input type="number" min={15} max={720} value={durationMinutes} onChange={(event) => setDurationMinutes(Number(event.target.value))} required />
+        </label>
         {groups.length > 0 && (
           <label>
             Group alert
@@ -206,6 +224,13 @@ export function SessionManager() {
                 <h3>{session.title}</h3>
                 <p>{new Date(session.scheduled_at).toLocaleString()}</p>
               </div>
+              {session.status === "live" && (
+                <div className="host-live-summary">
+                  <span><strong>{session.checked_in_count ?? 0}</strong> checked in</span>
+                  <span><strong>{session.heading_there_count ?? 0}</strong> heading there</span>
+                  <span>{session.duration_minutes} min event</span>
+                </div>
+              )}
               {session.status === "scheduled" && (
                 <button type="button" className="text-action" onClick={() => updateStatus(session.id, "start")}>
                   Start
@@ -220,6 +245,20 @@ export function SessionManager() {
           ))
         )}
       </div>
+      {liveSession && (
+        <aside className="host-control-panel" aria-live="polite">
+          <div className="section-heading">
+            <div><p className="eyebrow">Hosting live</p><h3>{liveSession.title}</h3></div>
+            <span className="detail-status live">Live now</span>
+          </div>
+          <div className="host-stat-grid">
+            <span><strong>{liveSession.checked_in_count ?? 0}</strong><small>Checked in</small></span>
+            <span><strong>{liveSession.heading_there_count ?? 0}</strong><small>Heading there</small></span>
+            <span><strong>{remainingMinutes}</strong><small>Minutes remaining</small></span>
+          </div>
+          <button className="secondary-action danger-action" type="button" onClick={() => void updateStatus(liveSession.id, "end")}>End event</button>
+        </aside>
+      )}
     </section>
   );
 }

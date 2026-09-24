@@ -32,6 +32,7 @@ export function ExploreView() {
   const previousStatuses = useRef<Record<string, Session["status"]>>({});
   const hasLoadedNearby = useRef(false);
   const { notify } = useNotifications();
+  const isCheckedIn = selectedSession?.current_user_rsvp === "checked_in";
 
   useEffect(() => {
     if (!mapElement.current || map.current) return;
@@ -241,8 +242,8 @@ export function ExploreView() {
             <span><strong>{selectedSession.broadcast_radius_m}m</strong> area</span>
           </div>
           <div className="detail-actions">
-            <button className="primary-action" type="button" onClick={toggleRsvp} disabled={isRsvpSubmitting}>
-              {isRsvpSubmitting ? "Updating..." : isHeadingThere ? "You're heading there" : "I'm heading there"}
+            <button className="primary-action" type="button" onClick={toggleRsvp} disabled={isRsvpSubmitting || isCheckedIn}>
+              {isRsvpSubmitting ? "Updating..." : isCheckedIn ? "Checked in" : isHeadingThere ? "Heading there" : "I'm heading there"}
             </button>
             <button className="secondary-action" type="button" onClick={() => openDirections(selectedSession)}>
               Directions

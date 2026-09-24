@@ -53,6 +53,6 @@ describe("ExploreView", () => {
     fireEvent.click(screen.getByRole("button", { name: /Sunday Beach Volleyball/ }));
     expect(screen.getByRole("article", { name: "Session details" })).toHaveTextContent("Sunday Beach Volleyball");
     fireEvent.click(screen.getByRole("button", { name: "I'm heading there" }));
-    expect(await screen.findByRole("button", { name: "You're heading there" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Heading there" })).toBeInTheDocument();
   });
 });

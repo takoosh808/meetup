@@ -38,6 +38,7 @@ export async function ensureSchema() {
         description TEXT,
         status TEXT NOT NULL DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'live', 'ended')),
         scheduled_at TIMESTAMPTZ NOT NULL,
+        duration_minutes INTEGER NOT NULL DEFAULT 120,
         broadcast_radius_m INTEGER NOT NULL,
         checkin_radius_m INTEGER NOT NULL,
         shutoff_radius_m INTEGER NOT NULL,
@@ -46,6 +47,7 @@ export async function ensureSchema() {
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
     `);
+    await client.query(`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS duration_minutes INTEGER NOT NULL DEFAULT 120;`);
     await client.query(`
       ALTER TABLE sessions
       ADD COLUMN IF NOT EXISTS anchor_location geography(Point, 4326);
