@@ -62,10 +62,15 @@ export async function ensureSchema() {
         user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         rsvp_status TEXT NOT NULL DEFAULT 'heading_there'
           CHECK (rsvp_status IN ('heading_there', 'checked_in', 'cancelled')),
+        outside_radius_since TIMESTAMPTZ,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         PRIMARY KEY (session_id, user_id)
       );
+    `);
+    await client.query(`
+      ALTER TABLE session_attendance
+      ADD COLUMN IF NOT EXISTS outside_radius_since TIMESTAMPTZ;
     `);
     await client.query(`
       ALTER TABLE session_attendance

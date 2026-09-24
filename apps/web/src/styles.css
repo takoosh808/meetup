@@ -115,17 +115,17 @@ button {
   width: 44px;
   height: 44px;
   place-items: center;
-  color: #49dda9;
-  background: transparent;
+  color: #07110d;
+  background: #49dda9;
   border: 1px solid #49dda9;
   border-radius: 50%;
-  font-size: 1.4rem;
-  font-weight: 900;
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
 .logout-arrow:hover {
-  color: #05281e;
-  background: #49dda9;
+  color: #000;
+  background: #62e5b7;
 }
 
 .auth-form h2,

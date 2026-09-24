@@ -126,6 +126,20 @@ describe("session lifecycle", () => {
     expect(checkedInMatch.checked_in_count).toBe(1);
     expect(checkedInMatch.current_user_rsvp).toBe("checked_in");
 
+    const firstOutsideUpdate = await request(app)
+      .post(`/sessions/${sessionId}/location`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ latitude: 34.025, longitude: -118.4912, accuracyM: 0 });
+    expect(firstOutsideUpdate.status).toBe(200);
+    expect(firstOutsideUpdate.body.attendanceStatus).toBe("checked_in");
+
+    await pool.query(
+      `UPDATE session_attendance
+       SET outside_radius_since = now() - INTERVAL '2 minutes'
+       WHERE session_id = $1 AND user_id = (SELECT id FROM users WHERE email = $2)`,
+      [sessionId, testEmail]
+    );
+
     const checkedOut = await request(app)
       .post(`/sessions/${sessionId}/location`)
       .set("Authorization", `Bearer ${token}`)

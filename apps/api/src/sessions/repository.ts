@@ -162,6 +162,7 @@ export async function toggleRsvp(sessionId: string, userId: string): Promise<"he
          WHEN session_attendance.rsvp_status IN ('heading_there', 'checked_in') THEN 'cancelled'
          ELSE 'heading_there'
        END,
+       outside_radius_since = NULL,
        updated_at = now()
      RETURNING rsvp_status`,
     [sessionId, userId]
@@ -220,8 +221,31 @@ export async function updateAttendanceFromLocation(params: {
            sessions.anchor_location,
            ST_SetSRID(ST_MakePoint($4, $3), 4326)::geography,
            sessions.checkin_radius_m + 20
-         ) THEN 'heading_there'
+         )
+         AND attendance.outside_radius_since <= now() - INTERVAL '2 minutes' THEN 'heading_there'
        ELSE attendance.rsvp_status
+     END,
+     outside_radius_since = CASE
+       WHEN ST_DWithin(
+         sessions.anchor_location,
+         ST_SetSRID(ST_MakePoint($4, $3), 4326)::geography,
+         sessions.checkin_radius_m + LEAST(GREATEST($5, 0), 100)
+       ) THEN NULL
+       WHEN attendance.rsvp_status = 'checked_in'
+         AND NOT ST_DWithin(
+           sessions.anchor_location,
+           ST_SetSRID(ST_MakePoint($4, $3), 4326)::geography,
+           sessions.checkin_radius_m + 20
+         )
+         AND attendance.outside_radius_since IS NOT NULL
+         AND attendance.outside_radius_since <= now() - INTERVAL '2 minutes' THEN NULL
+       WHEN attendance.rsvp_status = 'checked_in'
+         AND NOT ST_DWithin(
+           sessions.anchor_location,
+           ST_SetSRID(ST_MakePoint($4, $3), 4326)::geography,
+           sessions.checkin_radius_m + 20
+         ) THEN COALESCE(attendance.outside_radius_since, now())
+       ELSE NULL
      END,
      updated_at = now()
      FROM sessions
