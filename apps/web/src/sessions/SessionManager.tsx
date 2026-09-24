@@ -86,6 +86,10 @@ export function SessionManager() {
     setError(null);
     setIsSubmitting(true);
     try {
+      const eventAnchor = anchor ?? await captureAnchor();
+      if (!eventAnchor) {
+        throw new Error("Location permission is required to create an event.");
+      }
       const response = await createSession(token, {
         title,
         activityType,
@@ -95,7 +99,7 @@ export function SessionManager() {
         broadcastRadiusM: 150,
         checkinRadiusM: 40,
         shutoffRadiusM: 300,
-        anchor,
+        anchor: eventAnchor,
         groupId: groupId || undefined,
       });
       setSessions((current) => [...current, response.session]);
@@ -107,24 +111,29 @@ export function SessionManager() {
     }
   }
 
-  function captureAnchor() {
+  function captureAnchor(): Promise<{ latitude: number; longitude: number } | undefined> {
     if (!navigator.geolocation) {
       setError("Location is not available in this browser");
-      return;
+      return Promise.resolve(undefined);
     }
     setError(null);
     setIsLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setAnchor({ latitude: position.coords.latitude, longitude: position.coords.longitude });
-        setIsLocating(false);
-      },
-      () => {
-        setError("We could not access your location. You can create the session without an anchor.");
-        setIsLocating(false);
-      },
-      { enableHighAccuracy: false, maximumAge: 300000, timeout: 10000 }
-    );
+    return new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const nextAnchor = { latitude: position.coords.latitude, longitude: position.coords.longitude };
+          setAnchor(nextAnchor);
+          setIsLocating(false);
+          resolve(nextAnchor);
+        },
+        () => {
+          setError("Location permission is required to create an event.");
+          setIsLocating(false);
+          resolve(undefined);
+        },
+        { enableHighAccuracy: true, maximumAge: 15000, timeout: 15000 }
+      );
+    });
   }
 
   async function updateStatus(sessionId: string, action: "start" | "end") {
@@ -220,7 +229,7 @@ export function SessionManager() {
           <div>
             <p className="location-label">Map anchor</p>
             <p className="location-help">
-              {anchor ? "Location captured for nearby discovery." : "Optional. Share a general event area, once."}
+              {anchor ? "Location captured. This event will use this anchor." : "Required. Your event needs a location anchor."}
             </p>
           </div>
           <button className="secondary-action" type="button" onClick={captureAnchor} disabled={isLocating}>

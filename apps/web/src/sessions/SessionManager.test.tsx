@@ -8,6 +8,12 @@ const token = "test-token";
 describe("SessionManager", () => {
   beforeEach(() => {
     localStorage.setItem("meetup.token", token);
+    vi.stubGlobal("navigator", {
+      geolocation: {
+        getCurrentPosition: (success: PositionCallback) =>
+          success({ coords: { latitude: 34.0195, longitude: -118.4912, accuracy: 5 } } as GeolocationPosition),
+      },
+    });
     vi.stubGlobal(
       "fetch",
       vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {

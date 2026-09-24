@@ -216,7 +216,7 @@ describe("session lifecycle", () => {
     const rejected = await request(app)
       .post("/sessions")
       .set("Authorization", `Bearer ${other.body.token}`)
-      .send({ ...sessionPayload, groupId: group.body.group.id });
+      .send({ ...sessionPayload, groupId: group.body.group.id, anchor: { latitude: 34.0195, longitude: -118.4912 } });
     expect(rejected.status).toBe(403);
     await pool.query("DELETE FROM users WHERE email = $1", [otherEmail]);
   });
