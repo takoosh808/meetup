@@ -125,8 +125,8 @@ export async function listNearbySessions(params: {
 }): Promise<SessionRecord[]> {
   const result = await pool.query<SessionRecord>(
      `SELECT ${nearbySessionColumns},
-       ROUND(ST_Y(sessions.anchor_location::geometry)::numeric, 3)::double precision AS map_latitude,
-       ROUND(ST_X(sessions.anchor_location::geometry)::numeric, 3)::double precision AS map_longitude,
+      ROUND(ST_Y(sessions.anchor_location::geometry)::numeric, 4)::double precision AS map_latitude,
+      ROUND(ST_X(sessions.anchor_location::geometry)::numeric, 4)::double precision AS map_longitude,
        COUNT(attendance.user_id) FILTER (WHERE attendance.rsvp_status IN ('heading_there', 'checked_in'))::integer
          AS heading_there_count,
        COUNT(attendance.user_id) FILTER (WHERE attendance.rsvp_status = 'checked_in')::integer

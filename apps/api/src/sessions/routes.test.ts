@@ -77,8 +77,8 @@ describe("session lifecycle", () => {
     const match = res.body.sessions.find((session: { id: string }) => session.id === sessionId);
     expect(match).toBeDefined();
     expect(match.title).toBe(sessionPayload.title);
-    expect(match.map_latitude).toBe(34.02);
-    expect(match.map_longitude).toBe(-118.491);
+    expect(match.map_latitude).toBe(34.0195);
+    expect(match.map_longitude).toBe(-118.4912);
     expect(match.heading_there_count).toBe(0);
     expect(match.current_user_rsvp).toBeNull();
 

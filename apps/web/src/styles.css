@@ -665,16 +665,22 @@ button {
   justify-content: stretch;
 }
 
+.detail-actions .primary-action,
+.detail-actions .secondary-action {
+  flex: 1;
+}
+
+.checkin-action {
+  width: 100%;
+  margin-top: 12px;
+}
+
 .tracking-note {
   margin: 12px 0 0;
   color: #49dda9;
   font-size: 0.82rem;
 }
 
-.detail-actions .primary-action,
-.detail-actions .secondary-action {
-  flex: 1;
-}
 
 .notification-settings {
   display: flex;

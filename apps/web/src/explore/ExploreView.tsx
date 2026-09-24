@@ -80,7 +80,7 @@ export function ExploreView() {
           .then((response) => setSessions(response.sessions))
           .catch((requestError) => setError(requestError instanceof Error ? requestError.message : "Unable to load nearby sessions"));
       },
-      { enableHighAccuracy: false, maximumAge: 300000, timeout: 10000 }
+      { enableHighAccuracy: true, maximumAge: 15000, timeout: 15000 }
     );
   }, [token]);
 
@@ -135,6 +135,16 @@ export function ExploreView() {
         setIsWithinCheckinRadius(session.current_user_rsvp === "checked_in");
       });
       markers.current?.addLayer(marker);
+      if (markers.current) {
+        L.circle([session.map_latitude, session.map_longitude], {
+          radius: session.checkin_radius_m,
+          color: "#49dda9",
+          weight: 1,
+          opacity: 0.65,
+          fillColor: "#49dda9",
+          fillOpacity: 0.04,
+        }).addTo(markers.current);
+      }
     });
     L.circle(center, { radius: 150, color: "#49dda9", weight: 1, fillOpacity: 0.06 }).addTo(markers.current);
   }, [center, sessions]);
@@ -164,7 +174,7 @@ export function ExploreView() {
           });
       },
       () => setError("Location updates are unavailable; keep this tab open to check in."),
-      { enableHighAccuracy: false, maximumAge: 300000, timeout: 10000 }
+      { enableHighAccuracy: true, maximumAge: 15000, timeout: 15000 }
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
@@ -260,7 +270,7 @@ export function ExploreView() {
           <div className="detail-stats">
             <span><strong>{selectedSession.checked_in_count ?? 0}</strong> checked in</span>
             <span><strong>{selectedSession.heading_there_count ?? 0}</strong> heading there</span>
-            <span><strong>{selectedSession.broadcast_radius_m}m</strong> area</span>
+            <span><strong>{selectedSession.checkin_radius_m}m</strong> check-in radius</span>
           </div>
           <div className="detail-actions">
             <button className="primary-action" type="button" onClick={toggleRsvp} disabled={isRsvpSubmitting || isCheckedIn}>
@@ -270,7 +280,7 @@ export function ExploreView() {
               Directions
             </button>
           </div>
-              <button
+          <button
                 className="secondary-action checkin-action"
                 type="button"
                 disabled={!isWithinCheckinRadius || isCheckedIn}
