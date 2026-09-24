@@ -35,6 +35,7 @@ export function ExploreView() {
   const { notify } = useNotifications();
   const isCheckedIn = selectedSession?.current_user_rsvp === "checked_in";
   const [isWithinCheckinRadius, setIsWithinCheckinRadius] = useState(false);
+  const [locationDiagnostic, setLocationDiagnostic] = useState<{ distanceM: number; checkinRadiusM: number } | null>(null);
 
   useEffect(() => {
     if (!mapElement.current || map.current) return;
@@ -133,6 +134,7 @@ export function ExploreView() {
         setSelectedSession(session);
         setIsHeadingThere(isAttendanceActive(session));
         setIsWithinCheckinRadius(session.current_user_rsvp === "checked_in");
+        setLocationDiagnostic(null);
       });
       markers.current?.addLayer(marker);
       if (markers.current) {
@@ -162,8 +164,9 @@ export function ExploreView() {
           longitude: position.coords.longitude,
           accuracyM: position.coords.accuracy,
         })
-          .then(({ attendanceStatus }) => {
+          .then(({ attendanceStatus, distanceM, checkinRadiusM }) => {
             setIsWithinCheckinRadius(attendanceStatus === "checked_in");
+            setLocationDiagnostic({ distanceM, checkinRadiusM });
             setSelectedSession((current) => current ? {
               ...current,
               current_user_rsvp: attendanceStatus,
@@ -184,11 +187,12 @@ export function ExploreView() {
     if (!token || !selectedSession || !latestPosition.current || !isWithinCheckinRadius) return;
     try {
       const position = latestPosition.current;
-      const { attendanceStatus } = await sendSessionLocation(token, selectedSession.id, {
+      const { attendanceStatus, distanceM, checkinRadiusM } = await sendSessionLocation(token, selectedSession.id, {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
         accuracyM: position.coords.accuracy,
       });
+      setLocationDiagnostic({ distanceM, checkinRadiusM });
       setSelectedSession((current) => current ? { ...current, current_user_rsvp: attendanceStatus } : current);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Unable to check in");
@@ -253,6 +257,7 @@ export function ExploreView() {
         <span className="location-state">{locationState}</span>
       </div>
       <div className="map-frame" aria-label="Nearby meetup map" ref={mapElement} />
+      <p className="map-help">Green ring: your discovery area. Event rings: exact check-in radius.</p>
       {error && <p className="auth-error" role="alert">{error}</p>}
       {selectedSession && (
         <article className="session-detail" aria-label="Session details">
@@ -286,8 +291,9 @@ export function ExploreView() {
                 disabled={!isWithinCheckinRadius || isCheckedIn}
                 onClick={() => void checkIn()}
               >
-                {isCheckedIn ? "Checked in" : isWithinCheckinRadius ? "Check in" : "Move within the event radius to check in"}
+                    {isCheckedIn ? "Checked in" : isWithinCheckinRadius ? "Check in" : "Move within the check-in ring to check in"}
               </button>
+                  {locationDiagnostic && <p className="tracking-note">You are {Math.round(locationDiagnostic.distanceM)}m away. Check-in radius: {locationDiagnostic.checkinRadiusM}m.</p>}
           {isHeadingThere && (
             <p className="tracking-note">Location check-in is active while this tab stays open.</p>
           )}
@@ -302,6 +308,7 @@ export function ExploreView() {
               setSelectedSession(session);
               setIsHeadingThere(isAttendanceActive(session));
               setIsWithinCheckinRadius(session.current_user_rsvp === "checked_in");
+              setLocationDiagnostic(null);
             }}>
               <span className={`status-dot ${session.status}`} aria-hidden="true" />
               <div>

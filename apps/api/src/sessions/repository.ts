@@ -198,8 +198,16 @@ export async function updateAttendanceFromLocation(params: {
   latitude: number;
   longitude: number;
   accuracyM: number;
-}): Promise<"heading_there" | "checked_in"> {
-  const result = await pool.query<{ rsvp_status: "heading_there" | "checked_in" }>(
+}): Promise<{
+  attendanceStatus: "heading_there" | "checked_in";
+  distanceM: number;
+  checkinRadiusM: number;
+}> {
+  const result = await pool.query<{
+    rsvp_status: "heading_there" | "checked_in";
+    distance_m: number;
+    checkin_radius_m: number;
+  }>(
     `UPDATE session_attendance attendance
      SET rsvp_status = CASE
        WHEN ST_DWithin(
@@ -223,13 +231,22 @@ export async function updateAttendanceFromLocation(params: {
        AND attendance.rsvp_status IN ('heading_there', 'checked_in')
        AND sessions.status IN ('scheduled', 'live')
        AND sessions.anchor_location IS NOT NULL
-     RETURNING attendance.rsvp_status`,
+     RETURNING attendance.rsvp_status,
+       ST_Distance(
+         sessions.anchor_location,
+         ST_SetSRID(ST_MakePoint($4, $3), 4326)::geography
+       )::double precision AS distance_m,
+       sessions.checkin_radius_m`,
     [params.sessionId, params.userId, params.latitude, params.longitude, params.accuracyM]
   );
   if (!result.rows[0]) {
     throw new Error("RSVP to this active session before sending location");
   }
-  return result.rows[0].rsvp_status;
+  return {
+    attendanceStatus: result.rows[0].rsvp_status,
+    distanceM: result.rows[0].distance_m,
+    checkinRadiusM: result.rows[0].checkin_radius_m,
+  };
 }
 
 export async function updateHostLocation(params: {

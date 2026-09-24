@@ -93,14 +93,14 @@ sessionRouter.post("/:sessionId/location", async (req, res) => {
   }
 
   try {
-    const attendanceStatus = await updateAttendanceFromLocation({
+    const attendance = await updateAttendanceFromLocation({
       sessionId: req.params.sessionId,
       userId: req.userId!,
       latitude,
       longitude,
       accuracyM,
     });
-    res.json({ attendanceStatus });
+    res.json(attendance);
   } catch {
     res.status(403).json({ error: "RSVP to this active session before sending location" });
   }
