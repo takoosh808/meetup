@@ -8,21 +8,13 @@ import { ChangePasswordForm } from "./ChangePasswordForm";
 import { AdminHub } from "../admin/AdminHub";
 
 export function ProfileView() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<"explore" | "host" | "community" | "profile" | "admin">("explore");
   if (!user) return null;
 
   return (
     <>
       <a className="skip-link" href="#dashboard-content">Skip to dashboard content</a>
-      <section className="profile-summary">
-        <div>
-          <p className="eyebrow">Profile</p>
-          <h2>Welcome, {user.displayName}</h2>
-          <p className="profile-email">{user.email}</p>
-        </div>
-        <button className="text-action" type="button" onClick={logout}>Log out</button>
-      </section>
       <nav className="dashboard-tabs" aria-label="Dashboard sections">
         {([
           ["explore", "Explore"],

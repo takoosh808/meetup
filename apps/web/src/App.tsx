@@ -5,17 +5,24 @@ import { SignupForm } from "./auth/SignupForm";
 import { ProfileView } from "./auth/ProfileView";
 
 function App() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, logout } = useAuth();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [loginNotice, setLoginNotice] = useState<string | null>(null);
 
   return (
     <main className="app-shell">
       <section className={user ? "dashboard-panel" : "auth-panel"} aria-label="Meetup account">
-        <div className="brand">
-          <span className="brand-mark" aria-hidden="true">M</span>
-          <h1>Meetup</h1>
-        </div>
+        {user ? (
+          <header className="dashboard-brand">
+            <h1>Meetup</h1>
+            <button className="logout-arrow" type="button" onClick={logout} aria-label="Log out" title="Log out">→</button>
+          </header>
+        ) : (
+          <div className="brand">
+            <span className="brand-mark" aria-hidden="true">M</span>
+            <h1>Meetup</h1>
+          </div>
+        )}
         {isLoading ? (
           <p>Loading your profile...</p>
         ) : user ? (

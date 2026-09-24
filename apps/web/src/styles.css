@@ -87,6 +87,47 @@ button {
   text-shadow: 0 0 18px rgb(73 221 169 / 18%);
 }
 
+.dashboard-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #353535;
+}
+
+.dashboard-brand h1 {
+  margin: 0;
+  font-size: clamp(3.5rem, 8vw, 5.5rem);
+  line-height: 0.9;
+  background-color: #49dda9;
+  background-image: url("https://tile.openstreetmap.org/13/1399/3271.png");
+  background-position: center;
+  background-size: cover;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.logout-arrow {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  color: #49dda9;
+  background: transparent;
+  border: 1px solid #49dda9;
+  border-radius: 50%;
+  font-size: 1.4rem;
+  font-weight: 900;
+}
+
+.logout-arrow:hover {
+  color: #05281e;
+  background: #49dda9;
+}
+
 .auth-form h2,
 .profile-summary h2,
 .sessions h2 {
@@ -218,7 +259,7 @@ button {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 6px;
-  margin-top: 24px;
+  margin-top: 0;
   padding: 5px;
   background: #141414;
   border: 1px solid #353535;
