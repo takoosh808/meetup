@@ -6,6 +6,7 @@ import {
   createSession,
   fetchMySessions,
   sendHostLocation,
+  updateLiveTimeLimit,
   type ActivityType,
   fetchGroups,
   type Session,
@@ -28,6 +29,8 @@ export function SessionManager() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [groups, setGroups] = useState<Group[]>([]);
   const [groupId, setGroupId] = useState("");
+  const [activeView, setActiveView] = useState<"create" | "host">("create");
+  const [timeLimitMinutes, setTimeLimitMinutes] = useState(120);
 
   useEffect(() => {
     if (!token) return;
@@ -96,6 +99,7 @@ export function SessionManager() {
         groupId: groupId || undefined,
       });
       setSessions((current) => [...current, response.session]);
+      setActiveView("host");
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Unable to create session");
     } finally {
@@ -136,10 +140,21 @@ export function SessionManager() {
     }
   }
 
+  async function updateTimeLimit() {
+    if (!token || !liveSession) return;
+    try {
+      const response = await updateLiveTimeLimit(token, liveSession.id, timeLimitMinutes);
+      setSessions((current) => current.map((session) => session.id === liveSession.id ? response.session : session));
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Unable to update time limit");
+    }
+  }
+
   const liveSession = sessions.find((session) => session.status === "live");
   const remainingMinutes = liveSession
     ? Math.max(0, Math.ceil((new Date(liveSession.scheduled_at).getTime() + liveSession.duration_minutes * 60000 - Date.now()) / 60000))
     : 0;
+  const previousSessions = sessions.filter((session) => session.status === "ended");
 
   return (
     <section className="sessions" aria-labelledby="session-heading">
@@ -150,7 +165,12 @@ export function SessionManager() {
         </div>
       </div>
 
-      <form className="session-form" onSubmit={handleSubmit}>
+      <nav className="host-tabs" aria-label="Host sections">
+        <button className={activeView === "create" ? "host-tab active" : "host-tab"} type="button" onClick={() => setActiveView("create")}>Create</button>
+        <button className={activeView === "host" ? "host-tab active" : "host-tab"} type="button" onClick={() => setActiveView("host")}>Host</button>
+      </nav>
+
+      {activeView === "create" && <form className="session-form" onSubmit={handleSubmit}>
         <label>
           Session title
           <input value={title} onChange={(event) => setTitle(event.target.value)} required />
@@ -185,7 +205,7 @@ export function SessionManager() {
         </label>
         <label>
           Event length (minutes)
-          <input type="number" min={15} max={720} value={durationMinutes} onChange={(event) => setDurationMinutes(Number(event.target.value))} required />
+            <input type="number" min={15} max={720} value={durationMinutes} onChange={(event) => setDurationMinutes(Number(event.target.value))} required />
         </label>
         {groups.length > 0 && (
           <label>
@@ -211,9 +231,39 @@ export function SessionManager() {
         <button className="primary-action" type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Creating session..." : "Create session"}
         </button>
-      </form>
+      </form>}
 
-      <div className="session-list">
+      {activeView === "host" && <>
+      {liveSession ? (
+        <aside className="host-control-panel" aria-live="polite">
+          <div className="section-heading">
+            <div><p className="eyebrow">Hosting live</p><h3>{liveSession.title}</h3></div>
+            <span className="detail-status live">Live now</span>
+          </div>
+          <div className="host-stat-grid">
+            <span><strong>{liveSession.checked_in_count ?? 0}</strong><small>Checked in</small></span>
+            <span><strong>{liveSession.heading_there_count ?? 0}</strong><small>Heading there</small></span>
+            <span><strong>{remainingMinutes}</strong><small>Minutes remaining</small></span>
+          </div>
+          <label className="time-limit-control">Event time limit (minutes)
+            <input type="number" min={15} max={720} value={timeLimitMinutes} onChange={(event) => setTimeLimitMinutes(Number(event.target.value))} onBlur={() => void updateTimeLimit()} />
+          </label>
+          <button className="secondary-action danger-action" type="button" onClick={() => void updateStatus(liveSession.id, "end")}>End event</button>
+        </aside>
+      ) : <p className="empty-state">No event is live. Create an event, then start hosting it here.</p>}
+
+      <div className="session-list previous-events">
+        <h3>Previous events</h3>
+        {previousSessions.length === 0 ? <p className="empty-state">No previous events yet.</p> : previousSessions.map((session) => (
+          <article className="session-row" key={session.id}>
+            <div><p className="session-status">Ended</p><h3>{session.title}</h3><p>{new Date(session.scheduled_at).toLocaleString()}</p></div>
+            <span>{session.checked_in_count ?? 0} checked in</span>
+          </article>
+        ))}
+      </div>
+      </>}
+
+      {activeView === "create" && <div className="session-list">
         {sessions.length === 0 ? (
           <p className="empty-state">No sessions yet. Start with your Sunday volleyball meetup.</p>
         ) : (
@@ -244,21 +294,7 @@ export function SessionManager() {
             </article>
           ))
         )}
-      </div>
-      {liveSession && (
-        <aside className="host-control-panel" aria-live="polite">
-          <div className="section-heading">
-            <div><p className="eyebrow">Hosting live</p><h3>{liveSession.title}</h3></div>
-            <span className="detail-status live">Live now</span>
-          </div>
-          <div className="host-stat-grid">
-            <span><strong>{liveSession.checked_in_count ?? 0}</strong><small>Checked in</small></span>
-            <span><strong>{liveSession.heading_there_count ?? 0}</strong><small>Heading there</small></span>
-            <span><strong>{remainingMinutes}</strong><small>Minutes remaining</small></span>
-          </div>
-          <button className="secondary-action danger-action" type="button" onClick={() => void updateStatus(liveSession.id, "end")}>End event</button>
-        </aside>
-      )}
+      </div>}
     </section>
   );
 }

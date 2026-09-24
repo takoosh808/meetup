@@ -10,6 +10,7 @@ import {
   toggleRsvp,
   updateAttendanceFromLocation,
   updateHostLocation,
+  updateLiveTimeLimit,
 } from "./repository";
 import { createSessionSchema, nearbySessionsSchema } from "./schemas";
 import { notifySessionStarted } from "../notifications/service";
@@ -129,4 +130,14 @@ sessionRouter.post("/:sessionId/host-location", async (req, res) => {
   } catch {
     res.status(403).json({ error: "Only the host of a live anchored session can send this location" });
   }
+});
+
+sessionRouter.post("/:sessionId/time-limit", async (req, res) => {
+  const remainingMinutes = Number(req.body.remainingMinutes);
+  if (!Number.isInteger(remainingMinutes) || remainingMinutes < 15 || remainingMinutes > 720) {
+    return res.status(400).json({ error: "Time limit must be between 15 and 720 minutes" });
+  }
+  const session = await updateLiveTimeLimit(req.params.sessionId, req.userId!, remainingMinutes);
+  if (!session) return res.status(404).json({ error: "Live session not found or not owned by you" });
+  res.json({ session });
 });

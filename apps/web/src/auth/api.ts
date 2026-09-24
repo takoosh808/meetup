@@ -227,6 +227,15 @@ export async function sendHostLocation(
   return parseJsonOrThrow(res);
 }
 
+export async function updateLiveTimeLimit(token: string, sessionId: string, remainingMinutes: number): Promise<{ session: Session }> {
+  const res = await fetch(`${API_URL}/sessions/${sessionId}/time-limit`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ remainingMinutes }),
+  });
+  return parseJsonOrThrow(res);
+}
+
 export async function fetchNotificationConfig(token: string): Promise<{ publicKey: string | null }> {
   const res = await fetch(`${API_URL}/notifications/config`, {
     headers: { Authorization: `Bearer ${token}` },

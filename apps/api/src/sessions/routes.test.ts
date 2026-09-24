@@ -160,6 +160,25 @@ describe("session lifecycle", () => {
     expect(ended.body.session.status).toBe("ended");
   });
 
+  it("updates the remaining time limit for a live hosted session", async () => {
+    const create = await request(app)
+      .post("/sessions")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        ...sessionPayload,
+        title: `${sessionPayload.title} timer`,
+        anchor: { latitude: 34.0195, longitude: -118.4912 },
+      });
+    const sessionId = create.body.session.id;
+    await request(app).post(`/sessions/${sessionId}/start`).set("Authorization", `Bearer ${token}`);
+    const updated = await request(app)
+      .post(`/sessions/${sessionId}/time-limit`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ remainingMinutes: 45 });
+    expect(updated.status).toBe(200);
+    expect(updated.body.session.duration_minutes).toBeGreaterThanOrEqual(45);
+  });
+
   it("automatically ends hosting when the host leaves the shutoff radius", async () => {
     const create = await request(app)
       .post("/sessions")

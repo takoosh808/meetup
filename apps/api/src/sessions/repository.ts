@@ -277,3 +277,17 @@ export async function isGroupMember(groupId: string, userId: string) {
   );
   return result.rowCount === 1;
 }
+
+export async function updateLiveTimeLimit(sessionId: string, hostId: string, remainingMinutes: number) {
+  const result = await pool.query<SessionRecord>(
+    `UPDATE sessions
+     SET duration_minutes = GREATEST(
+       0,
+       CEIL(EXTRACT(EPOCH FROM (now() - scheduled_at)) / 60)::integer + $3
+     )
+     WHERE id = $1 AND host_id = $2 AND status = 'live'
+     RETURNING ${sessionColumns}`,
+    [sessionId, hostId, remainingMinutes]
+  );
+  return result.rows[0] ?? null;
+}
