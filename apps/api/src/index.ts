@@ -11,7 +11,7 @@ export function createApp() {
   const app = express();
   const allowedOrigins = (process.env.WEB_ORIGIN ?? "http://localhost:5173")
     .split(",")
-    .map((origin) => origin.trim())
+    .map((origin) => origin.trim().replace(/\/$/, ""))
     .filter(Boolean);
 
   app.use(cors({
@@ -20,7 +20,7 @@ export function createApp() {
         callback(null, true);
         return;
       }
-      callback(new Error("CORS origin not allowed"));
+      callback(null, false);
     },
   }));
   app.use(express.json());

@@ -19,3 +19,23 @@ describe("GET /readyz", () => {
     expect(res.body).toEqual({ status: "ready" });
   });
 });
+
+describe("CORS", () => {
+  it("allows the configured frontend origin", async () => {
+    process.env.WEB_ORIGIN = "https://frontend.example/";
+    const app = createApp();
+    const res = await request(app)
+      .get("/health")
+      .set("Origin", "https://frontend.example");
+    expect(res.headers["access-control-allow-origin"]).toBe("https://frontend.example");
+  });
+
+  it("does not allow an unconfigured origin", async () => {
+    process.env.WEB_ORIGIN = "https://frontend.example";
+    const app = createApp();
+    const res = await request(app)
+      .get("/health")
+      .set("Origin", "https://other.example");
+    expect(res.headers["access-control-allow-origin"]).toBeUndefined();
+  });
+});
