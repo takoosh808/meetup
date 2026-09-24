@@ -238,6 +238,7 @@ export function ExploreView() {
           <p className="detail-meta">{selectedSession.activity_type} · {new Date(selectedSession.scheduled_at).toLocaleString()}</p>
           {selectedSession.description && <p className="detail-description">{selectedSession.description}</p>}
           <div className="detail-stats">
+            <span><strong>{selectedSession.checked_in_count ?? 0}</strong> checked in</span>
             <span><strong>{selectedSession.heading_there_count ?? 0}</strong> heading there</span>
             <span><strong>{selectedSession.broadcast_radius_m}m</strong> area</span>
           </div>
@@ -266,7 +267,7 @@ export function ExploreView() {
               <span className={`status-dot ${session.status}`} aria-hidden="true" />
               <div>
                 <h3>{session.title}</h3>
-                <p>{session.activity_type} · {session.status}</p>
+                <p>{session.activity_type} · {session.status} · {session.checked_in_count ?? 0} checked in</p>
               </div>
               <span className="nearby-arrow" aria-hidden="true">›</span>
             </button>

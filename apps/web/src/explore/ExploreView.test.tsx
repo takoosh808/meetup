@@ -26,6 +26,7 @@ describe("ExploreView", () => {
             map_latitude: 34.02,
             map_longitude: -118.491,
             heading_there_count: 0,
+            checked_in_count: 2,
             current_user_rsvp: null,
           },
         ],
@@ -52,6 +53,7 @@ describe("ExploreView", () => {
     await waitFor(() => expect(screen.getByText("Using your current area")).toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: /Sunday Beach Volleyball/ }));
     expect(screen.getByRole("article", { name: "Session details" })).toHaveTextContent("Sunday Beach Volleyball");
+    expect(screen.getByRole("article", { name: "Session details" })).toHaveTextContent("2");
     fireEvent.click(screen.getByRole("button", { name: "I'm heading there" }));
     expect(await screen.findByRole("button", { name: "Heading there" })).toBeInTheDocument();
   });
