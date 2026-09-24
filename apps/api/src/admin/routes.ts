@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { requireAdmin, requireAuth } from "../auth/middleware";
-import { deleteUser, endEvent, listEvents, listGroups, listUsers, updateUser } from "./repository";
+import { deleteGroup, deletePreviousEvent, deleteUser, endEvent, listEvents, listGroups, listUsers, updateUser } from "./repository";
 
 export const adminRouter = Router();
 adminRouter.use(requireAuth, requireAdmin);
@@ -48,5 +48,17 @@ adminRouter.get("/groups", async (_req, res) => {
 adminRouter.post("/events/:eventId/end", async (req, res) => {
   const ended = await endEvent(req.params.eventId);
   if (!ended) return res.status(404).json({ error: "Event not found or already ended" });
+  res.status(204).send();
+});
+
+adminRouter.delete("/events/:eventId", async (req, res) => {
+  const deleted = await deletePreviousEvent(req.params.eventId);
+  if (!deleted) return res.status(400).json({ error: "Only ended events can be removed" });
+  res.status(204).send();
+});
+
+adminRouter.delete("/groups/:groupId", async (req, res) => {
+  const deleted = await deleteGroup(req.params.groupId);
+  if (!deleted) return res.status(404).json({ error: "Group not found" });
   res.status(204).send();
 });

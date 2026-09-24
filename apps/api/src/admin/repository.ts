@@ -62,3 +62,16 @@ export async function endEvent(eventId: string) {
   );
   return result.rowCount === 1;
 }
+
+export async function deletePreviousEvent(eventId: string) {
+  const result = await pool.query(
+    "DELETE FROM sessions WHERE id = $1 AND status = 'ended' RETURNING id",
+    [eventId]
+  );
+  return result.rowCount === 1;
+}
+
+export async function deleteGroup(groupId: string) {
+  const result = await pool.query("DELETE FROM groups WHERE id = $1 RETURNING id", [groupId]);
+  return result.rowCount === 1;
+}

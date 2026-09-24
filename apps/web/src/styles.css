@@ -77,6 +77,14 @@ button {
 .brand h1 {
   color: #49dda9;
   font-size: 2rem;
+  background-color: #49dda9;
+  background-image: url("https://tile.openstreetmap.org/13/1399/3271.png");
+  background-position: center;
+  background-size: cover;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 18px rgb(73 221 169 / 18%);
 }
 
 .auth-form h2,

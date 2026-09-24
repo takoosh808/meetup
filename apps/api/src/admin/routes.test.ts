@@ -57,4 +57,14 @@ describe("admin routes", () => {
     const removed = await request(app).delete(`/admin/users/${target.id}`).set(headers);
     expect(removed.status).toBe(204);
   });
+
+  it("allows admins to remove previous events and groups", async () => {
+    const headers = { Authorization: `Bearer ${adminToken}` };
+    const group = await pool.query<{ id: string }>("INSERT INTO groups (owner_id, name) VALUES ((SELECT id FROM users WHERE email = $1), $2) RETURNING id", [adminEmail, `Admin Group ${Date.now()}`]);
+    const event = await pool.query<{ id: string }>("INSERT INTO sessions (host_id, title, activity_type, scheduled_at, status, broadcast_radius_m, checkin_radius_m, shutoff_radius_m) VALUES ((SELECT id FROM users WHERE email = $1), $2, 'other', now(), 'ended', 150, 40, 300) RETURNING id", [adminEmail, `Admin Event ${Date.now()}`]);
+    const deletedEvent = await request(app).delete(`/admin/events/${event.rows[0].id}`).set(headers);
+    const deletedGroup = await request(app).delete(`/admin/groups/${group.rows[0].id}`).set(headers);
+    expect(deletedEvent.status).toBe(204);
+    expect(deletedGroup.status).toBe(204);
+  });
 });

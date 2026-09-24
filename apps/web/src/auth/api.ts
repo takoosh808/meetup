@@ -286,6 +286,14 @@ export async function endAdminEvent(token: string, eventId: string) {
   const res = await fetch(`${API_URL}/admin/events/${eventId}/end`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
   return parseJsonOrThrow(res);
 }
+export async function deleteAdminEvent(token: string, eventId: string) {
+  const res = await fetch(`${API_URL}/admin/events/${eventId}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+  return parseJsonOrThrow(res);
+}
+export async function deleteAdminGroup(token: string, groupId: string) {
+  const res = await fetch(`${API_URL}/admin/groups/${groupId}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+  return parseJsonOrThrow(res);
+}
 
 export async function fetchGroups(token: string): Promise<{ groups: Group[] }> {
   const res = await fetch(`${API_URL}/community/groups`, { headers: { Authorization: `Bearer ${token}` } });
