@@ -22,6 +22,7 @@ export function ExploreView() {
   const mapElement = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const markers = useRef<L.LayerGroup | null>(null);
+  const latestPosition = useRef<GeolocationPosition | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [center, setCenter] = useState<[number, number]>(defaultCenter);
   const [locationState, setLocationState] = useState("Showing nearby events");
@@ -33,6 +34,7 @@ export function ExploreView() {
   const hasLoadedNearby = useRef(false);
   const { notify } = useNotifications();
   const isCheckedIn = selectedSession?.current_user_rsvp === "checked_in";
+  const [isWithinCheckinRadius, setIsWithinCheckinRadius] = useState(false);
 
   useEffect(() => {
     if (!mapElement.current || map.current) return;
@@ -130,6 +132,7 @@ export function ExploreView() {
       marker.on("click", () => {
         setSelectedSession(session);
         setIsHeadingThere(isAttendanceActive(session));
+        setIsWithinCheckinRadius(session.current_user_rsvp === "checked_in");
       });
       markers.current?.addLayer(marker);
     });
@@ -143,12 +146,14 @@ export function ExploreView() {
 
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
+        latestPosition.current = position;
         sendSessionLocation(token, selectedSession.id, {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
           accuracyM: position.coords.accuracy,
         })
           .then(({ attendanceStatus }) => {
+            setIsWithinCheckinRadius(attendanceStatus === "checked_in");
             setSelectedSession((current) => current ? {
               ...current,
               current_user_rsvp: attendanceStatus,
@@ -164,6 +169,21 @@ export function ExploreView() {
 
     return () => navigator.geolocation.clearWatch(watchId);
   }, [isHeadingThere, selectedSession?.id, token]);
+
+  async function checkIn() {
+    if (!token || !selectedSession || !latestPosition.current || !isWithinCheckinRadius) return;
+    try {
+      const position = latestPosition.current;
+      const { attendanceStatus } = await sendSessionLocation(token, selectedSession.id, {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        accuracyM: position.coords.accuracy,
+      });
+      setSelectedSession((current) => current ? { ...current, current_user_rsvp: attendanceStatus } : current);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Unable to check in");
+    }
+  }
 
   async function openDirections(session: Session) {
     if (!token) return;
@@ -250,6 +270,14 @@ export function ExploreView() {
               Directions
             </button>
           </div>
+              <button
+                className="secondary-action checkin-action"
+                type="button"
+                disabled={!isWithinCheckinRadius || isCheckedIn}
+                onClick={() => void checkIn()}
+              >
+                {isCheckedIn ? "Checked in" : isWithinCheckinRadius ? "Check in" : "Move within the event radius to check in"}
+              </button>
           {isHeadingThere && (
             <p className="tracking-note">Location check-in is active while this tab stays open.</p>
           )}
@@ -263,6 +291,7 @@ export function ExploreView() {
             <button className="nearby-row" key={session.id} type="button" onClick={() => {
               setSelectedSession(session);
               setIsHeadingThere(isAttendanceActive(session));
+              setIsWithinCheckinRadius(session.current_user_rsvp === "checked_in");
             }}>
               <span className={`status-dot ${session.status}`} aria-hidden="true" />
               <div>
