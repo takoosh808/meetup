@@ -88,4 +88,18 @@ describe("ExploreView", () => {
     expect(screen.getByText("Evening Basketball")).toBeInTheDocument();
     expect(screen.queryByText("Sunday Beach Volleyball")).not.toBeInTheDocument();
   });
+
+  it("refreshes nearby sessions for the selected distance", async () => {
+    render(
+      <AuthProvider>
+        <ExploreView />
+      </AuthProvider>
+    );
+
+    await screen.findByRole("heading", { name: "Plans near you" });
+    fireEvent.change(screen.getByLabelText("Distance filter"), { target: { value: "2000" } });
+    await waitFor(() => {
+      expect(vi.mocked(fetch).mock.calls.some(([input]) => String(input).includes("radiusM=2000"))).toBe(true);
+    });
+  });
 });

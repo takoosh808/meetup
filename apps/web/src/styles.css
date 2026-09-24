@@ -294,17 +294,22 @@ button {
   font-size: 0.82rem;
 }
 
-.explore-filter {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.explore-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   margin-top: 16px;
+}
+
+.explore-filter {
+  display: grid;
+  gap: 6px;
   color: #b8c0b8;
   font-size: 0.86rem;
 }
 
 .explore-filter select {
+  width: 100%;
   min-height: 40px;
   padding: 0 10px;
   color: #f2f1ec;

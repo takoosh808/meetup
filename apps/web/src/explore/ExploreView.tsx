@@ -26,6 +26,7 @@ export function ExploreView() {
   const latestPosition = useRef<GeolocationPosition | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [activityFilter, setActivityFilter] = useState<ActivityType | "all">("all");
+  const [discoveryRadiusM, setDiscoveryRadiusM] = useState(5000);
   const [center, setCenter] = useState<[number, number]>(defaultCenter);
   const [locationState, setLocationState] = useState("Showing nearby events");
   const [error, setError] = useState<string | null>(null);
@@ -63,14 +64,14 @@ export function ExploreView() {
       setCenter(nextCenter);
       setLocationState("Using your current area");
       map.current?.setView(nextCenter, 13);
-      fetchNearbySessions(token, { latitude: nextCenter[0], longitude: nextCenter[1] })
+      fetchNearbySessions(token, { latitude: nextCenter[0], longitude: nextCenter[1], radiusM: discoveryRadiusM })
         .then((response) => setSessions(response.sessions))
         .catch((requestError) => setError(requestError instanceof Error ? requestError.message : "Unable to load nearby sessions"));
     };
 
     if (!navigator.geolocation) {
       setLocationState("Showing the starter area");
-      fetchNearbySessions(token, { latitude: defaultCenter[0], longitude: defaultCenter[1] })
+      fetchNearbySessions(token, { latitude: defaultCenter[0], longitude: defaultCenter[1], radiusM: discoveryRadiusM })
         .then((response) => setSessions(response.sessions))
         .catch(() => setError("Unable to load nearby sessions"));
       return;
@@ -80,18 +81,18 @@ export function ExploreView() {
       loadNearby,
       () => {
         setLocationState("Showing the starter area");
-        fetchNearbySessions(token, { latitude: defaultCenter[0], longitude: defaultCenter[1] })
+        fetchNearbySessions(token, { latitude: defaultCenter[0], longitude: defaultCenter[1], radiusM: discoveryRadiusM })
           .then((response) => setSessions(response.sessions))
           .catch((requestError) => setError(requestError instanceof Error ? requestError.message : "Unable to load nearby sessions"));
       },
       { enableHighAccuracy: true, maximumAge: 15000, timeout: 15000 }
     );
-  }, [token]);
+  }, [discoveryRadiusM, token]);
 
   useEffect(() => {
     if (!token) return;
     const refresh = () => {
-      fetchNearbySessions(token, { latitude: center[0], longitude: center[1] })
+      fetchNearbySessions(token, { latitude: center[0], longitude: center[1], radiusM: discoveryRadiusM })
         .then((response) => {
           if (hasLoadedNearby.current) {
             response.sessions.forEach((session) => {
@@ -117,7 +118,7 @@ export function ExploreView() {
     };
     const intervalId = window.setInterval(refresh, 30000);
     return () => window.clearInterval(intervalId);
-  }, [center, notify, token]);
+  }, [center, discoveryRadiusM, notify, token]);
 
   useEffect(() => {
     if (!map.current || !markers.current) return;
@@ -259,20 +260,35 @@ export function ExploreView() {
         </div>
         <span className="location-state">{locationState}</span>
       </div>
-      <div className="explore-filter">
-        <label htmlFor="activity-filter">Activity filter</label>
-        <select
-          id="activity-filter"
-          value={activityFilter}
-          onChange={(event) => setActivityFilter(event.target.value as ActivityType | "all")}
-        >
-          <option value="all">All activities</option>
-          <option value="volleyball">Volleyball</option>
-          <option value="basketball">Basketball</option>
-          <option value="soccer">Soccer</option>
-          <option value="running">Running</option>
-          <option value="other">Other</option>
-        </select>
+      <div className="explore-filters">
+        <div className="explore-filter">
+          <label htmlFor="activity-filter">Activity filter</label>
+          <select
+            id="activity-filter"
+            value={activityFilter}
+            onChange={(event) => setActivityFilter(event.target.value as ActivityType | "all")}
+          >
+            <option value="all">All activities</option>
+            <option value="volleyball">Volleyball</option>
+            <option value="basketball">Basketball</option>
+            <option value="soccer">Soccer</option>
+            <option value="running">Running</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div className="explore-filter">
+          <label htmlFor="distance-filter">Distance filter</label>
+          <select
+            id="distance-filter"
+            value={discoveryRadiusM}
+            onChange={(event) => setDiscoveryRadiusM(Number(event.target.value))}
+          >
+            <option value={500}>500m</option>
+            <option value={2000}>2km</option>
+            <option value={5000}>5km</option>
+            <option value={10000}>10km</option>
+          </select>
+        </div>
       </div>
       <div className="map-frame" aria-label="Nearby meetup map" ref={mapElement} />
       <p className="map-help">Green ring: your discovery area. Event rings: exact check-in radius.</p>
