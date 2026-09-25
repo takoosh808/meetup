@@ -56,18 +56,18 @@ export async function createSession(params: {
   checkinRadiusM: number;
   shutoffRadiusM: number;
   durationMinutes: number;
-  anchor?: { latitude: number; longitude: number };
+  anchor?: { latitude: number; longitude: number; accuracyM: number };
   groupId?: string;
 }): Promise<SessionRecord> {
   const result = await pool.query<SessionRecord>(
     `INSERT INTO sessions (
        host_id, title, activity_type, description, scheduled_at,
-       broadcast_radius_m, checkin_radius_m, shutoff_radius_m, anchor_location, group_id, duration_minutes
+       broadcast_radius_m, checkin_radius_m, shutoff_radius_m, anchor_location, anchor_accuracy_m, group_id, duration_minutes
      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8,
        CASE WHEN $9::double precision IS NULL OR $10::double precision IS NULL
          THEN NULL
          ELSE ST_SetSRID(ST_MakePoint($10, $9), 4326)::geography
-      END, $11, $12)
+      END, $11, $12, $13)
      RETURNING ${sessionColumns}`,
     [
       params.hostId,
@@ -80,6 +80,7 @@ export async function createSession(params: {
       params.shutoffRadiusM,
       params.anchor?.latitude ?? null,
       params.anchor?.longitude ?? null,
+      params.anchor?.accuracyM ?? 0,
       params.groupId ?? null,
       params.durationMinutes,
     ]
@@ -201,11 +202,13 @@ export async function updateAttendanceFromLocation(params: {
   attendanceStatus: "heading_there" | "checked_in";
   distanceM: number;
   checkinRadiusM: number;
+  effectiveCheckinRadiusM: number;
 }> {
   const result = await pool.query<{
     rsvp_status: "heading_there" | "checked_in";
     distance_m: number;
     checkin_radius_m: number;
+    effective_checkin_radius_m: number;
   }>(
     `UPDATE session_attendance attendance
      SET rsvp_status = CASE
@@ -213,12 +216,13 @@ export async function updateAttendanceFromLocation(params: {
          sessions.anchor_location,
          ST_SetSRID(ST_MakePoint($4, $3), 4326)::geography,
          sessions.checkin_radius_m + LEAST(GREATEST($5, 0), 100)
+           + LEAST(GREATEST(sessions.anchor_accuracy_m, 0), 150)
        ) THEN 'checked_in'
        WHEN attendance.rsvp_status = 'checked_in'
          AND NOT ST_DWithin(
            sessions.anchor_location,
            ST_SetSRID(ST_MakePoint($4, $3), 4326)::geography,
-           sessions.checkin_radius_m + 20
+           sessions.checkin_radius_m + 20 + LEAST(GREATEST(sessions.anchor_accuracy_m, 0), 150)
          )
          AND attendance.outside_radius_since <= now() - INTERVAL '2 minutes' THEN 'heading_there'
        ELSE attendance.rsvp_status
@@ -228,12 +232,13 @@ export async function updateAttendanceFromLocation(params: {
          sessions.anchor_location,
          ST_SetSRID(ST_MakePoint($4, $3), 4326)::geography,
          sessions.checkin_radius_m + LEAST(GREATEST($5, 0), 100)
+           + LEAST(GREATEST(sessions.anchor_accuracy_m, 0), 150)
        ) THEN NULL
        WHEN attendance.rsvp_status = 'checked_in'
          AND NOT ST_DWithin(
            sessions.anchor_location,
            ST_SetSRID(ST_MakePoint($4, $3), 4326)::geography,
-           sessions.checkin_radius_m + 20
+           sessions.checkin_radius_m + 20 + LEAST(GREATEST(sessions.anchor_accuracy_m, 0), 150)
          )
          AND attendance.outside_radius_since IS NOT NULL
          AND attendance.outside_radius_since <= now() - INTERVAL '2 minutes' THEN NULL
@@ -241,7 +246,7 @@ export async function updateAttendanceFromLocation(params: {
          AND NOT ST_DWithin(
            sessions.anchor_location,
            ST_SetSRID(ST_MakePoint($4, $3), 4326)::geography,
-           sessions.checkin_radius_m + 20
+           sessions.checkin_radius_m + 20 + LEAST(GREATEST(sessions.anchor_accuracy_m, 0), 150)
          ) THEN COALESCE(attendance.outside_radius_since, now())
        ELSE NULL
      END,
@@ -258,7 +263,9 @@ export async function updateAttendanceFromLocation(params: {
          sessions.anchor_location,
          ST_SetSRID(ST_MakePoint($4, $3), 4326)::geography
        )::double precision AS distance_m,
-       sessions.checkin_radius_m`,
+       sessions.checkin_radius_m,
+       sessions.checkin_radius_m + LEAST(GREATEST($5, 0), 100)
+         + LEAST(GREATEST(sessions.anchor_accuracy_m, 0), 150) AS effective_checkin_radius_m`,
     [params.sessionId, params.userId, params.latitude, params.longitude, params.accuracyM]
   );
   if (!result.rows[0]) {
@@ -268,6 +275,7 @@ export async function updateAttendanceFromLocation(params: {
     attendanceStatus: result.rows[0].rsvp_status,
     distanceM: result.rows[0].distance_m,
     checkinRadiusM: result.rows[0].checkin_radius_m,
+    effectiveCheckinRadiusM: result.rows[0].effective_checkin_radius_m,
   };
 }
 
@@ -295,7 +303,11 @@ export async function updateHostLocation(params: {
          sessions.shutoff_radius_m + LEAST(GREATEST($5, 0), 100)
        ) THEN now()
        ELSE ended_at
-     END
+     END,
+     anchor_accuracy_m = GREATEST(
+       sessions.anchor_accuracy_m,
+       LEAST(GREATEST($5, 0), 150)
+     )
      WHERE sessions.id = $1
        AND sessions.host_id = $2
        AND sessions.status = 'live'

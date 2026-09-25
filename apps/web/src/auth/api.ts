@@ -72,7 +72,7 @@ export interface CreateSessionInput {
   broadcastRadiusM: number;
   checkinRadiusM: number;
   shutoffRadiusM: number;
-  anchor?: { latitude: number; longitude: number };
+  anchor?: { latitude: number; longitude: number; accuracyM: number };
   groupId?: string;
 }
 
@@ -201,7 +201,7 @@ export async function sendSessionLocation(
   token: string,
   sessionId: string,
   location: { latitude: number; longitude: number; accuracyM: number }
-): Promise<{ attendanceStatus: "heading_there" | "checked_in"; distanceM: number; checkinRadiusM: number }> {
+): Promise<{ attendanceStatus: "heading_there" | "checked_in"; distanceM: number; checkinRadiusM: number; effectiveCheckinRadiusM: number }> {
   const res = await fetch(`${API_URL}/sessions/${sessionId}/location`, {
     method: "POST",
     headers: {

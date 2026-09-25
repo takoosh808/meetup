@@ -61,6 +61,7 @@ describe("SessionManager", () => {
       checkinRadiusM: 40,
       shutoffRadiusM: 300,
       durationMinutes: 120,
+      anchor: { latitude: 34.0195, longitude: -118.4912, accuracyM: 5 },
     });
   });
 });

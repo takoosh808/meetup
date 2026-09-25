@@ -44,10 +44,12 @@ export async function ensureSchema() {
         shutoff_radius_m INTEGER NOT NULL,
         started_at TIMESTAMPTZ,
         ended_at TIMESTAMPTZ,
+        anchor_accuracy_m DOUBLE PRECISION NOT NULL DEFAULT 0,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
     `);
     await client.query(`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS duration_minutes INTEGER NOT NULL DEFAULT 120;`);
+    await client.query(`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS anchor_accuracy_m DOUBLE PRECISION NOT NULL DEFAULT 0;`);
     await client.query(`
       ALTER TABLE sessions
       ADD COLUMN IF NOT EXISTS anchor_location geography(Point, 4326);

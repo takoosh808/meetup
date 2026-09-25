@@ -180,6 +180,31 @@ describe("session lifecycle", () => {
     expect(res.body.sessions[0].id).toBe(sessionId);
   });
 
+  it("includes a coarse host location fix in the server-side check-in tolerance", async () => {
+    const create = await request(app)
+      .post("/sessions")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        ...sessionPayload,
+        title: `${sessionPayload.title} coarse anchor`,
+        anchor: { latitude: 34.0195, longitude: -118.4912, accuracyM: 100 },
+      });
+    const coarseSessionId = create.body.session.id;
+
+    await request(app)
+      .post(`/sessions/${coarseSessionId}/rsvp`)
+      .set("Authorization", `Bearer ${token}`);
+
+    const location = await request(app)
+      .post(`/sessions/${coarseSessionId}/location`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ latitude: 34.0207, longitude: -118.4912, accuracyM: 5 });
+    expect(location.status).toBe(200);
+    expect(location.body.attendanceStatus).toBe("checked_in");
+    expect(location.body.distanceM).toBeGreaterThan(130);
+    expect(location.body.effectiveCheckinRadiusM).toBe(145);
+  });
+
   it("starts and ends a hosted session", async () => {
     const started = await request(app)
       .post(`/sessions/${sessionId}/start`)
@@ -234,6 +259,12 @@ describe("session lifecycle", () => {
       .send({ latitude: 34.03, longitude: -118.4912, accuracyM: 5 });
     expect(nearby.status).toBe(200);
     expect(nearby.body.status).toBe("ended");
+
+    const accuracy = await pool.query<{ anchor_accuracy_m: number }>(
+      "SELECT anchor_accuracy_m FROM sessions WHERE id = $1",
+      [hostSessionId]
+    );
+    expect(accuracy.rows[0].anchor_accuracy_m).toBe(5);
   });
 
   it("rejects a group session for a non-member", async () => {

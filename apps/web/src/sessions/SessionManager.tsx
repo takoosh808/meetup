@@ -23,7 +23,7 @@ export function SessionManager() {
   const [scheduledAt, setScheduledAt] = useState(defaultScheduledTime);
   const [durationMinutes, setDurationMinutes] = useState(120);
   const [error, setError] = useState<string | null>(null);
-  const [anchor, setAnchor] = useState<{ latitude: number; longitude: number }>();
+  const [anchor, setAnchor] = useState<{ latitude: number; longitude: number; accuracyM: number }>();
   const [isLocating, setIsLocating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [groups, setGroups] = useState<Group[]>([]);
@@ -109,7 +109,7 @@ export function SessionManager() {
     }
   }
 
-  function captureAnchor(): Promise<{ latitude: number; longitude: number } | undefined> {
+  function captureAnchor(): Promise<{ latitude: number; longitude: number; accuracyM: number } | undefined> {
     if (!navigator.geolocation) {
       setError("Location is not available in this browser");
       return Promise.resolve(undefined);
@@ -119,7 +119,11 @@ export function SessionManager() {
     return new Promise((resolve) => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const nextAnchor = { latitude: position.coords.latitude, longitude: position.coords.longitude };
+          const nextAnchor = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracyM: position.coords.accuracy,
+          };
           setAnchor(nextAnchor);
           setIsLocating(false);
           resolve(nextAnchor);
