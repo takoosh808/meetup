@@ -20,6 +20,7 @@ export interface SessionRecord {
   map_longitude?: number;
   heading_there_count?: number;
   current_user_rsvp?: "heading_there" | "checked_in" | "cancelled" | null;
+  current_user_is_heading_there?: boolean | null;
   has_anchor?: boolean;
   checked_in_count?: number;
 }
@@ -90,7 +91,7 @@ export async function listSessionsByHost(hostId: string): Promise<SessionRecord[
   const result = await pool.query<SessionRecord>(
     `SELECT ${hostSessionColumns},
        COUNT(attendance.user_id) FILTER (WHERE attendance.rsvp_status = 'checked_in')::integer AS checked_in_count,
-       COUNT(attendance.user_id) FILTER (WHERE attendance.rsvp_status = 'heading_there')::integer AS heading_there_count
+      COUNT(attendance.user_id) FILTER (WHERE attendance.is_heading_there)::integer AS heading_there_count
      FROM sessions
      LEFT JOIN session_attendance attendance ON attendance.session_id = sessions.id
      WHERE sessions.host_id = $1
@@ -127,11 +128,12 @@ export async function listNearbySessions(params: {
      `SELECT ${nearbySessionColumns},
       ROUND(ST_Y(sessions.anchor_location::geometry)::numeric, 4)::double precision AS map_latitude,
       ROUND(ST_X(sessions.anchor_location::geometry)::numeric, 4)::double precision AS map_longitude,
-       COUNT(attendance.user_id) FILTER (WHERE attendance.rsvp_status IN ('heading_there', 'checked_in'))::integer
+       COUNT(attendance.user_id) FILTER (WHERE attendance.is_heading_there)::integer
          AS heading_there_count,
        COUNT(attendance.user_id) FILTER (WHERE attendance.rsvp_status = 'checked_in')::integer
          AS checked_in_count,
-       MAX(CASE WHEN attendance.user_id = $4 THEN attendance.rsvp_status END) AS current_user_rsvp
+       MAX(CASE WHEN attendance.user_id = $4 THEN attendance.rsvp_status END) AS current_user_rsvp,
+       BOOL_OR(attendance.is_heading_there) FILTER (WHERE attendance.user_id = $4) AS current_user_is_heading_there
      FROM sessions
      LEFT JOIN session_attendance attendance ON attendance.session_id = sessions.id
      WHERE status IN ('scheduled', 'live')
@@ -149,28 +151,24 @@ export async function listNearbySessions(params: {
   return result.rows;
 }
 
-export async function toggleRsvp(sessionId: string, userId: string): Promise<"heading_there" | "cancelled"> {
-  const result = await pool.query<{ rsvp_status: "heading_there" | "cancelled" }>(
-    `INSERT INTO session_attendance (session_id, user_id, rsvp_status)
-     SELECT $1, $2, 'heading_there'
+export async function toggleRsvp(sessionId: string, userId: string): Promise<boolean> {
+  const result = await pool.query<{ is_heading_there: boolean }>(
+    `INSERT INTO session_attendance (session_id, user_id, rsvp_status, is_heading_there)
+     SELECT $1, $2, 'heading_there', true
      WHERE EXISTS (
        SELECT 1 FROM sessions WHERE id = $1 AND status IN ('scheduled', 'live')
      )
      ON CONFLICT (session_id, user_id)
      DO UPDATE SET
-       rsvp_status = CASE
-         WHEN session_attendance.rsvp_status IN ('heading_there', 'checked_in') THEN 'cancelled'
-         ELSE 'heading_there'
-       END,
-       outside_radius_since = NULL,
+       is_heading_there = NOT session_attendance.is_heading_there,
        updated_at = now()
-     RETURNING rsvp_status`,
+     RETURNING is_heading_there`,
     [sessionId, userId]
   );
   if (!result.rows[0]) {
     throw new Error("Session not found or ended");
   }
-  return result.rows[0].rsvp_status;
+  return result.rows[0].is_heading_there;
 }
 
 export async function getDirectionsAnchor(sessionId: string, userId: string): Promise<{

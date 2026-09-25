@@ -14,8 +14,8 @@ import {
 
 const defaultCenter: [number, number] = [34.0195, -118.4912];
 
-function isAttendanceActive(session: Session | null) {
-  return session?.current_user_rsvp === "heading_there" || session?.current_user_rsvp === "checked_in";
+function isLocationTrackingActive(session: Session | null) {
+  return session?.current_user_is_heading_there === true || session?.current_user_rsvp === "checked_in";
 }
 
 export function ExploreView() {
@@ -99,7 +99,7 @@ export function ExploreView() {
               if (
                 session.status === "live" &&
                 previousStatuses.current[session.id] !== "live" &&
-                session.current_user_rsvp === "heading_there"
+                session.current_user_is_heading_there === true
               ) {
                 notify(`${session.title} is live`, {
                   body: "Your session is happening now.",
@@ -136,7 +136,7 @@ export function ExploreView() {
       marker.bindPopup(`<strong>${session.title}</strong><br>${session.status} · ${session.activity_type}`);
       marker.on("click", () => {
         setSelectedSession(session);
-        setIsHeadingThere(isAttendanceActive(session));
+        setIsHeadingThere(session.current_user_is_heading_there === true);
         setIsWithinCheckinRadius(session.current_user_rsvp === "checked_in");
         setLocationDiagnostic(null);
       });
@@ -156,7 +156,7 @@ export function ExploreView() {
   }, [center, visibleSessions]);
 
   useEffect(() => {
-    if (!token || !selectedSession || !isAttendanceActive(selectedSession) || !navigator.geolocation?.watchPosition) {
+    if (!token || !selectedSession || !isLocationTrackingActive(selectedSession) || !navigator.geolocation?.watchPosition) {
       return;
     }
 
@@ -223,13 +223,13 @@ export function ExploreView() {
     setError(null);
     try {
       const response = await toggleSessionRsvp(token, selectedSession.id);
-      const nextHeadingThere = response.rsvpStatus === "heading_there";
+      const nextHeadingThere = response.isHeadingThere;
       setIsHeadingThere(nextHeadingThere);
       setSessions((current) => current.map((session) => {
         if (session.id !== selectedSession.id) return session;
         return {
           ...session,
-          current_user_rsvp: response.rsvpStatus,
+          current_user_is_heading_there: nextHeadingThere,
           heading_there_count: Math.max(
             0,
             (session.heading_there_count ?? 0) + (nextHeadingThere ? 1 : -1)
@@ -238,7 +238,7 @@ export function ExploreView() {
       }));
       setSelectedSession((current) => current ? {
         ...current,
-        current_user_rsvp: response.rsvpStatus,
+        current_user_is_heading_there: nextHeadingThere,
         heading_there_count: Math.max(
           0,
           (current.heading_there_count ?? 0) + (nextHeadingThere ? 1 : -1)
@@ -312,8 +312,8 @@ export function ExploreView() {
             <span><strong>{selectedSession.checkin_radius_m}m</strong> check-in radius</span>
           </div>
           <div className="detail-actions">
-            <button className="primary-action" type="button" onClick={toggleRsvp} disabled={isRsvpSubmitting || isCheckedIn}>
-              {isRsvpSubmitting ? "Updating..." : isCheckedIn ? "Checked in" : isHeadingThere ? "Heading there" : "I'm heading there"}
+            <button className="primary-action" type="button" onClick={toggleRsvp} disabled={isRsvpSubmitting}>
+              {isRsvpSubmitting ? "Updating..." : isHeadingThere ? "I'm not heading there" : "I'm heading there"}
             </button>
             <button className="secondary-action" type="button" onClick={() => openDirections(selectedSession)}>
               Directions
@@ -340,7 +340,7 @@ export function ExploreView() {
           visibleSessions.map((session) => (
             <button className="nearby-row" key={session.id} type="button" onClick={() => {
               setSelectedSession(session);
-              setIsHeadingThere(isAttendanceActive(session));
+              setIsHeadingThere(session.current_user_is_heading_there === true);
               setIsWithinCheckinRadius(session.current_user_rsvp === "checked_in");
               setLocationDiagnostic(null);
             }}>

@@ -7,7 +7,7 @@ describe("ExploreView", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
       if (String(input).includes("/rsvp")) {
-        return { ok: true, json: async () => ({ rsvpStatus: "heading_there" }) };
+        return { ok: true, json: async () => ({ isHeadingThere: true }) };
       }
       return { ok: true, json: async () => ({
         sessions: [
@@ -73,7 +73,20 @@ describe("ExploreView", () => {
     expect(screen.getByRole("article", { name: "Session details" })).toHaveTextContent("Sunday Beach Volleyball");
     expect(screen.getByRole("article", { name: "Session details" })).toHaveTextContent("2");
     fireEvent.click(screen.getByRole("button", { name: "I'm heading there" }));
-    expect(await screen.findByRole("button", { name: "Heading there" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "I'm not heading there" })).toBeInTheDocument();
+  });
+
+  it("lets attendees toggle heading intent independently from check-in", async () => {
+    render(
+      <AuthProvider>
+        <ExploreView />
+      </AuthProvider>
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: /Sunday Beach Volleyball/ }));
+    fireEvent.click(screen.getByRole("button", { name: "I'm heading there" }));
+    expect(await screen.findByRole("button", { name: "I'm not heading there" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Move within the check-in ring to check in/ })).toBeInTheDocument();
   });
 
   it("filters nearby sessions by activity", async () => {

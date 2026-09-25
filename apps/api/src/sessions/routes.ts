@@ -65,8 +65,8 @@ sessionRouter.get("/nearby", async (req, res) => {
 
 sessionRouter.post("/:sessionId/rsvp", async (req, res) => {
   try {
-    const rsvpStatus = await toggleRsvp(req.params.sessionId, req.userId!);
-    res.json({ rsvpStatus });
+    const isHeadingThere = await toggleRsvp(req.params.sessionId, req.userId!);
+    res.json({ isHeadingThere });
   } catch {
     res.status(404).json({ error: "Session not found or ended" });
   }

@@ -59,6 +59,7 @@ export interface Session {
   heading_there_count?: number;
   checked_in_count?: number;
   current_user_rsvp?: "heading_there" | "checked_in" | "cancelled" | null;
+  current_user_is_heading_there?: boolean | null;
   has_anchor?: boolean;
 }
 
@@ -178,7 +179,7 @@ export async function changeSessionStatus(
 export async function toggleSessionRsvp(
   token: string,
   sessionId: string
-): Promise<{ rsvpStatus: "heading_there" | "cancelled" }> {
+): Promise<{ isHeadingThere: boolean }> {
   const res = await fetch(`${API_URL}/sessions/${sessionId}/rsvp`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },

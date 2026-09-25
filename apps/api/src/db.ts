@@ -74,6 +74,20 @@ export async function ensureSchema() {
     `);
     await client.query(`
       ALTER TABLE session_attendance
+      ADD COLUMN IF NOT EXISTS is_heading_there BOOLEAN;
+    `);
+    await client.query(`
+      UPDATE session_attendance
+      SET is_heading_there = rsvp_status IN ('heading_there', 'checked_in')
+      WHERE is_heading_there IS NULL;
+    `);
+    await client.query(`
+      ALTER TABLE session_attendance
+      ALTER COLUMN is_heading_there SET DEFAULT false,
+      ALTER COLUMN is_heading_there SET NOT NULL;
+    `);
+    await client.query(`
+      ALTER TABLE session_attendance
       DROP CONSTRAINT IF EXISTS session_attendance_rsvp_status_check;
     `);
     await client.query(`

@@ -95,7 +95,7 @@ describe("session lifecycle", () => {
       .post(`/sessions/${sessionId}/rsvp`)
       .set("Authorization", `Bearer ${token}`);
     expect(rsvp.status).toBe(200);
-    expect(rsvp.body.rsvpStatus).toBe("heading_there");
+    expect(rsvp.body.isHeadingThere).toBe(true);
 
     const directions = await request(app)
       .get(`/sessions/${sessionId}/directions`)
@@ -109,6 +109,7 @@ describe("session lifecycle", () => {
     const match = nearby.body.sessions.find((session: { id: string }) => session.id === sessionId);
     expect(match.heading_there_count).toBe(1);
     expect(match.current_user_rsvp).toBe("heading_there");
+    expect(match.current_user_is_heading_there).toBe(true);
 
     const checkedIn = await request(app)
       .post(`/sessions/${sessionId}/location`)
@@ -125,6 +126,25 @@ describe("session lifecycle", () => {
     );
     expect(checkedInMatch.checked_in_count).toBe(1);
     expect(checkedInMatch.current_user_rsvp).toBe("checked_in");
+    expect(checkedInMatch.current_user_is_heading_there).toBe(true);
+
+    const notHeadingWhileCheckedIn = await request(app)
+      .post(`/sessions/${sessionId}/rsvp`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(notHeadingWhileCheckedIn.body.isHeadingThere).toBe(false);
+
+    const checkedInNotHeading = await request(app)
+      .get("/sessions/nearby?latitude=34.0195&longitude=-118.4912&radiusM=1000")
+      .set("Authorization", `Bearer ${token}`);
+    const checkedInNotHeadingMatch = checkedInNotHeading.body.sessions.find(
+      (session: { id: string }) => session.id === sessionId
+    );
+    expect(checkedInNotHeadingMatch.current_user_rsvp).toBe("checked_in");
+    expect(checkedInNotHeadingMatch.current_user_is_heading_there).toBe(false);
+
+    await request(app)
+      .post(`/sessions/${sessionId}/rsvp`)
+      .set("Authorization", `Bearer ${token}`);
 
     const firstOutsideUpdate = await request(app)
       .post(`/sessions/${sessionId}/location`)
@@ -147,10 +167,10 @@ describe("session lifecycle", () => {
     expect(checkedOut.status).toBe(200);
     expect(checkedOut.body.attendanceStatus).toBe("heading_there");
 
-    const cancelled = await request(app)
+    const notHeadingThere = await request(app)
       .post(`/sessions/${sessionId}/rsvp`)
       .set("Authorization", `Bearer ${token}`);
-    expect(cancelled.body.rsvpStatus).toBe("cancelled");
+    expect(notHeadingThere.body.isHeadingThere).toBe(false);
   });
 
   it("lists a host's sessions", async () => {
