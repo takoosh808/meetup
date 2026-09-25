@@ -161,7 +161,18 @@ export async function toggleRsvp(sessionId: string, userId: string): Promise<boo
      )
      ON CONFLICT (session_id, user_id)
      DO UPDATE SET
-       is_heading_there = NOT session_attendance.is_heading_there,
+       rsvp_status = CASE
+         WHEN session_attendance.rsvp_status = 'cancelled' THEN 'heading_there'
+         ELSE session_attendance.rsvp_status
+       END,
+       is_heading_there = CASE
+         WHEN session_attendance.rsvp_status = 'cancelled' THEN true
+         ELSE NOT session_attendance.is_heading_there
+       END,
+       outside_radius_since = CASE
+         WHEN session_attendance.rsvp_status = 'cancelled' THEN NULL
+         ELSE session_attendance.outside_radius_since
+       END,
        updated_at = now()
      RETURNING is_heading_there`,
     [sessionId, userId]
@@ -186,7 +197,7 @@ export async function getDirectionsAnchor(sessionId: string, userId: string): Pr
      WHERE sessions.id = $1
        AND sessions.status IN ('scheduled', 'live')
        AND sessions.anchor_location IS NOT NULL
-       AND (sessions.host_id = $2 OR attendance.rsvp_status = 'heading_there')`,
+      AND (sessions.host_id = $2 OR attendance.rsvp_status IN ('heading_there', 'checked_in'))`,
     [sessionId, userId]
   );
   return result.rows[0] ?? null;

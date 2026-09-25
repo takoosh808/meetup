@@ -205,6 +205,36 @@ describe("session lifecycle", () => {
     expect(location.body.effectiveCheckinRadiusM).toBe(145);
   });
 
+  it("restores a cancelled legacy RSVP when heading intent is turned back on", async () => {
+    const create = await request(app)
+      .post("/sessions")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        ...sessionPayload,
+        title: `${sessionPayload.title} restored RSVP`,
+        anchor: { latitude: 34.0195, longitude: -118.4912, accuracyM: 5 },
+      });
+    const restoredSessionId = create.body.session.id;
+
+    await pool.query(
+      `INSERT INTO session_attendance (session_id, user_id, rsvp_status, is_heading_there)
+       VALUES ($1, (SELECT id FROM users WHERE email = $2), 'cancelled', false)`,
+      [restoredSessionId, testEmail]
+    );
+
+    const headingThere = await request(app)
+      .post(`/sessions/${restoredSessionId}/rsvp`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(headingThere.body.isHeadingThere).toBe(true);
+
+    const location = await request(app)
+      .post(`/sessions/${restoredSessionId}/location`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ latitude: 34.0195, longitude: -118.4912, accuracyM: 5 });
+    expect(location.status).toBe(200);
+    expect(location.body.attendanceStatus).toBe("checked_in");
+  });
+
   it("starts and ends a hosted session", async () => {
     const started = await request(app)
       .post(`/sessions/${sessionId}/start`)
