@@ -1,0 +1,30 @@
+workflows:
+  ios-testflight:
+    name: Meetup iOS TestFlight
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.meetup.community
+      vars:
+        VITE_API_URL: $VITE_API_URL
+        APP_STORE_CONNECT_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
+        APP_STORE_CONNECT_KEY_IDENTIFIER: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        APP_STORE_CONNECT_PRIVATE_KEY: $APP_STORE_CONNECT_PRIVATE_KEY
+      node: 20.14.0
+      xcode: latest
+    scripts:
+      - name: Install dependencies
+        script: npm install
+      - name: Build web bundle and sync Capacitor
+        script: npm run mobile:sync --workspace meetup-web
+      - name: Build and publish iOS archive
+        script: |
+          xcode-project build-ipa \
+            --workspace "apps/web/ios/App/App.xcworkspace" \
+            --scheme "App"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
