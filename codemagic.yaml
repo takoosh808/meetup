@@ -2,13 +2,13 @@ workflows:
   ios-testflight:
     name: Meetup iOS TestFlight
     integrations:
-      app_store_connect: codemagic
+      app_store_connect: Codemagic
     environment:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.meetup.community
       vars:
-        VITE_API_URL: $VITE_API_URL
+        VITE_API_URL: https://meetup-2ltu.onrender.com
       node: 20.14.0
       xcode: latest
     scripts:
